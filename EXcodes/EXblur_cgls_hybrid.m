@@ -20,7 +20,8 @@ rng(0);  % Make sure this test is repeatable.
 
 % Define the test problem.
 NoiseLevel = 0.01;
-[A, b, x, ProbInfo] = PRblurspeckle;
+n = 64;
+[A, b, x, ProbInfo] = PRblurrotation(n);
 [bn, NoiseInfo] = PRnoise(b, 'gauss', NoiseLevel);
 
 % Run CGLS, use the true image to compute error norms, and find iteration
@@ -33,50 +34,14 @@ options = IRset('x_true', x);
 % level is quite uncertain.
 options = IRset(options, 'NoiseLevel', NoiseLevel);
 [X_cgls_dp, IterInfo_cgls_dp] = IRcgls(A, bn, options);
-  
-% Run the Hybrid LSQR method, with NoStop on.
-options = IRset(options, 'RegParam', 'wgcv', 'NoStop', 'on');
-[X_hybrid, IterInfo_hybrid] = IRhybrid_lsqr(A, bn, options);
+
+% GCV
+[X_gcv] = IRgcv(A, bn);
+
 
 % Display the reconstructions;
 % uncomment as appropriate to avoid displaying titles and legends
-if strcmp(dispres, 'subplots')
-    figure(1), clf
-    subplot(3,3,1), imagesc(reshape(x, ProbInfo.xSize)), axis off, axis image, colormap(gray)
-    title('True solution','interpreter','latex','fontsize',18)
-    set(gca,'fontsize',10)
-    %
-    subplot(3,3,4), imagesc(reshape(bn, ProbInfo.bSize)), axis off, axis image, colormap(gray)
-    title('Noisy data','interpreter','latex','fontsize',18)
-    set(gca,'fontsize',10)
-    %
-    subplot(3,3,2), semilogy(1:100, IterInfo_cgls.Enrm, 'b-', 'LineWidth', 1.5)
-    hold on
-    semilogy(0:100, [norm(bn); IterInfo_hybrid.Enrm], 'k-.', 'LineWidth', 1.5)
-    hl = legend('cgls','hybrid','location','northeast');
-    set(hl,'interpreter','latex','fontsize',12)
-    semilogy(IterInfo_cgls.BestReg.It, IterInfo_cgls.BestReg.Enrm, 'ro', 'LineWidth', 1.5, 'MarkerSize', 6)
-    semilogy(IterInfo_cgls_dp.its, IterInfo_cgls_dp.Enrm(end), 'ms', 'LineWidth', 1.5, 'MarkerSize', 6)
-    semilogy(IterInfo_hybrid.StopReg.It, IterInfo_hybrid.Enrm(IterInfo_hybrid.StopReg.It), 'mx', 'LineWidth', LW, 'MarkerSize', MS)
-    title('Error history','interpreter','latex','fontsize',18)
-    axis([0,100,1.5e-1,IterInfo_hybrid.Enrm(1)])
-    set(gca,'fontsize',10)
-    %
-    subplot(3,3,5), imagesc(reshape(IterInfo_cgls.BestReg.X, ProbInfo.xSize)), axis off, axis image, colormap(gray)
-    title(['Best CGLS sol., $k$ = ' num2str(IterInfo_cgls.StopReg.It)],...
-    'interpreter','latex','fontsize',18)
-    set(gca,'fontsize',10)
-    %
-    subplot(3,3,3), imagesc(reshape(X_cgls_dp, ProbInfo.xSize)), axis off, axis image, colormap(gray)
-    title(['DP CGLS sol., $k$ = ',num2str(IterInfo_cgls_dp.StopReg.It)],...
-    'interpreter','latex','fontsize',18)
-    set(gca,'fontsize',10)
-    %
-    subplot(3,3,6), imagesc(reshape(IterInfo_hybrid.StopReg.X, ProbInfo.xSize)), axis off, axis image, colormap(gray)
-    title(['DP IRhybrid\_lsqr sol., $k$ = ',num2str(IterInfo_hybrid.StopReg.It)],...
-    'interpreter','latex','fontsize',18)
-    set(gca,'fontsize',10)
-elseif strcmp(dispres, 'manyplots')
+strcmp(dispres, 'manyplots')
     figure(1), clf
     PRshowx(x, ProbInfo)
     set(gca,'fontsize',24)
@@ -88,35 +53,19 @@ elseif strcmp(dispres, 'manyplots')
     title('Noisy data','interpreter','latex','fontsize',18)
     %
     figure(3), clf
-    axes('FontSize', 24), hold on
-    semilogy(1:100, IterInfo_cgls.Enrm, 'b-', 'LineWidth', LW)
-    hold on
-    semilogy(0:100, [norm(bn); IterInfo_hybrid.Enrm], 'k-.', 'LineWidth', LW)
-    semilogy(IterInfo_cgls.BestReg.It, IterInfo_cgls.BestReg.Enrm, 'ro', 'LineWidth', LW, 'MarkerSize', MS)
-    semilogy(IterInfo_cgls_dp.its, IterInfo_cgls_dp.Enrm(end), 'ms', 'LineWidth', LW, 'MarkerSize', MS)
-    semilogy(IterInfo_hybrid.StopReg.It, IterInfo_hybrid.StopReg.Enrm, 'mx', 'LineWidth', LW, 'MarkerSize', MS)
-    hl = legend('{\tt IRcgls} errors','{\tt IRhybrid\_lsqr} errors', ...
-      'optimal {\tt IRcgls} stopping iteration','{\tt IRcgls} DP stopping iteration', ...
-      '{\tt IRhybrid\_lsqr} DP stopping iteration');
-    set(hl,'interpreter','latex','fontsize',18)
-    % title('Error history','interpreter','latex','fontsize',18)
-    axis([0,100,0.15,IterInfo_hybrid.Enrm(1)])
-    %
-    figure(4), clf
     PRshowx(IterInfo_cgls.BestReg.X, ProbInfo)
     title(['Best CGLS sol., $k$ = ' num2str(IterInfo_cgls.BestReg.It)],...
     'interpreter','latex','fontsize',18)
     %
-    figure(5), clf
+    figure(4), clf
     PRshowx(X_cgls_dp, ProbInfo)
     title(['DP CGLS sol., $k$ = ',num2str(IterInfo_cgls_dp.StopReg.It)],...
     'interpreter','latex','fontsize',18)
     %
-    figure(6)
-    PRshowx(IterInfo_hybrid.StopReg.X, ProbInfo)
-    title(['DP IRhybrid\_lsqr sol., $k$ = ',num2str(IterInfo_hybrid.StopReg.It)],...
+    figure(5), clf
+    PRshowx(X_gcv, ProbInfo)
+    title('GCV sol.',...
     'interpreter','latex','fontsize',18)
-end
 
 return
 
