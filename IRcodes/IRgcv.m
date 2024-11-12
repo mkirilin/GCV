@@ -5,27 +5,35 @@ function [X] = IRgcv(A,b)
 % Find singular vectors of sparce matrix A
   [U,S,V] = svd(Afull);
 
+% TODO: take leading singular values k <= m0 = #singular
+
   m = size(Afull,1);
   disp(m);
-  min_sum = Inf;
-  argmin_k = 0;
 
-  for k = 0:m/2
-    dot_products = 0;
-    for j = k+1:m
-      dot_products = dot_products + (U(:,j)'*b)^2;
-    end
-    current_sum = dot_products / (1 - k/m)^2;
-    if current_sum < min_sum
-      min_sum = current_sum;
-      argmin_k = k;
-    end
-  end
+% Precompute squared dot products
+s = (U' * b).^2;
+
+% Compute cumulative sums in reverse order
+cs_rev = cumsum(s, 'reverse');
+
+% Define k range
+k_values = (0:floor(m/2))';
+
+% Compute denominators for all k
+denom = (1 - k_values / m).^2;
+
+% Compute current sums for all k
+current_sums = cs_rev(k_values + 1) ./ denom;
+
+% Find k that minimizes the current sum
+[~, idx] = min(current_sums);
+argmin_k = k_values(idx);
 
   disp(argmin_k);
 
-  X = 0;
-  for j = 1:argmin_k
-    X = X + (U(:,j)'*b)/(S(j,j))*V(:,j);
-  end
+% Compute coefficients
+coeffs = (U(:, 1:argmin_k)' * b) ./ diag(S(1:argmin_k, 1:argmin_k));
+
+% Compute X using vectorized operations
+X = V(:, 1:argmin_k) * coeffs;
 end
