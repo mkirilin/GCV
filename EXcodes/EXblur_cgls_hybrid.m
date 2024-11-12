@@ -53,16 +53,30 @@ strcmp(dispres, 'manyplots')
     title('Noisy data','interpreter','latex','fontsize',18)
     %
     figure(3), clf
+    axes('FontSize', 24), hold on
+    semilogy(1:100, IterInfo_cgls.Enrm, 'b-', 'LineWidth', LW)
+    hold on
+    semilogy(0:100, [norm(bn); IterInfo_cgls.Enrm], 'k-.', 'LineWidth', LW)
+    semilogy(IterInfo_cgls.BestReg.It, IterInfo_cgls.BestReg.Enrm, 'ro', 'LineWidth', LW, 'MarkerSize', MS)
+    semilogy(IterInfo_cgls_dp.its, IterInfo_cgls_dp.Enrm(end), 'ms', 'LineWidth', LW, 'MarkerSize', MS)
+    hl = legend('{\tt IRcgls} errors','{\tt IRhybrid\_lsqr} errors', ...
+      'optimal {\tt IRcgls} stopping iteration','{\tt IRcgls} DP stopping iteration', ...
+      '{\tt IRhybrid\_lsqr} DP stopping iteration');
+    set(hl,'interpreter','latex','fontsize',18)
+    % title('Error history','interpreter','latex','fontsize',18)
+    axis([0,100,0.15,IterInfo_cgls.Enrm(1)])
+    %
+    figure(4), clf
     PRshowx(IterInfo_cgls.BestReg.X, ProbInfo)
     title(['Best CGLS sol., $k$ = ' num2str(IterInfo_cgls.BestReg.It)],...
     'interpreter','latex','fontsize',18)
     %
-    figure(4), clf
+    figure(5), clf
     PRshowx(X_cgls_dp, ProbInfo)
     title(['DP CGLS sol., $k$ = ',num2str(IterInfo_cgls_dp.StopReg.It)],...
     'interpreter','latex','fontsize',18)
     %
-    figure(5), clf
+    figure(6), clf
     PRshowx(X_gcv, ProbInfo)
     title('GCV sol.',...
     'interpreter','latex','fontsize',18)
