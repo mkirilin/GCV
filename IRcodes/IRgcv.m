@@ -48,8 +48,8 @@ function [X, Xopt] = IRgcv(A,x,b,m0)
   % Compute optimal Xopt
   Xopt = X_cumsum(:, k_opt);
 
-  err_gcv = norm(X - x);
-  err_opt = norm(Xopt - x);
+  err_gcv = norm(X - x) / norm(x);
+  err_opt = norm(Xopt - x) / norm(x);
 
   % Print results
   fprintf('GCV error: %f on k = %d\n', err_gcv, argmin_k);

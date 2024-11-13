@@ -88,10 +88,14 @@ elseif strcmp(dispres, 'manyplots')
         mkdir('Results')
         cd('Results')
     end
-    figure(1), print -depsc -r300 EXblur_cgls_hybrid_a
-    figure(2), print -depsc -r300 EXblur_cgls_hybrid_b
-    figure(3), print -depsc -r300 EXblur_cgls_hybrid_c
-    figure(4), print -depsc -r300 EXblur_cgls_hybrid_f
+    exportgraphics(figure(1), 'EXblur_cgls_hybrid_a.eps', 'ContentType', ...
+                 'vector', 'Resolution', 300);
+    exportgraphics(figure(2), 'EXblur_cgls_hybrid_b.eps', 'ContentType', ...
+                 'vector', 'Resolution', 300);
+    exportgraphics(figure(3), 'EXblur_cgls_hybrid_c.eps', 'ContentType', ...
+                 'vector', 'Resolution', 300);
+    exportgraphics(figure(4), 'EXblur_cgls_hybrid_d.eps', 'ContentType', ...
+                 'vector', 'Resolution', 300);
 end
 cd(oldcd)
 
