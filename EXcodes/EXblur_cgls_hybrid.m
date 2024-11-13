@@ -19,13 +19,13 @@ MS = 10; % Size of markers on plots
 rng(0);  % Make sure this test is repeatable.
 
 % Define the test problem.
-NoiseLevel = 0.1;
+NoiseLevel = 0.01;
 n = 64;
 [A, b, x, ProbInfo] = PRblurrotation(n);
 [bn, NoiseInfo] = PRnoise(b, 'gauss', NoiseLevel);
 
 % GCV
-[X_gcv, X_opt] = IRgcv(A, x, bn, 1024);
+[X_gcv, X_opt] = IRgcv(A, x, bn, 100);
 
 % Display the reconstructions;
 % uncomment as appropriate to avoid displaying titles and legends
@@ -63,12 +63,15 @@ strcmp(dispres, 'manyplots')
     title('Optimal sol.',...
     'interpreter','latex','fontsize',18)
 
-return
+%return
 
 % A number of instructions useful to save the displayed figures follow;
 % the default is not to execute them. If you wish to save the displayed
 % figures in the dedicated 'Results' folder, please comment the above
 % return statement
+
+currentFolder = fileparts(mfilename('fullpath'));
+cd(currentFolder)
 oldcd = cd;
 if strcmp(dispres, 'subplots')
     try
@@ -88,9 +91,7 @@ elseif strcmp(dispres, 'manyplots')
     figure(1), print -depsc -r300 EXblur_cgls_hybrid_a
     figure(2), print -depsc -r300 EXblur_cgls_hybrid_b
     figure(3), print -depsc -r300 EXblur_cgls_hybrid_c
-    figure(4), print -depsc -r300 EXblur_cgls_hybrid_d
-    figure(5), print -depsc -r300 EXblur_cgls_hybrid_e
-    figure(6), print -depsc -r300 EXblur_cgls_hybrid_f
+    figure(4), print -depsc -r300 EXblur_cgls_hybrid_f
 end
 cd(oldcd)
 
@@ -119,7 +120,5 @@ elseif strcmp(dispres, 'manyplots')
     saveas(figure(2), 'EXblur_cgls_hybrid_b.fig')
     saveas(figure(3), 'EXblur_cgls_hybrid_c.fig')
     saveas(figure(4), 'EXblur_cgls_hybrid_d.fig')
-    saveas(figure(5), 'EXblur_cgls_hybrid_e.fig')
-    saveas(figure(6), 'EXblur_cgls_hybrid_f.fig')
 end
 cd(oldcd)

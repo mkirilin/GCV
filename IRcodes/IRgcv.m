@@ -6,9 +6,7 @@ function [X, Xopt] = IRgcv(A,x,b,m0)
   assert(m0 <= m, 'm0 must be less than or equal to the number of rows of A');
   fprintf('m = %d, m0 = %d\n', m, m0);
   [U,S,V] = svds(A, m0);
-
-  % set log scale
-  fprintf('Singular values: Done\n');
+  fprintf('SVDS Execution time: %f\n', toc);
 
   % Precompute squared dot products
   s = (U' * b).^2;
