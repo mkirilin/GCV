@@ -55,5 +55,5 @@ function [X, Xopt] = gcv(A,x,b,m0)
   % Print results
   fprintf('GCV error: %f on k = %d\n', err_gcv, argmin_k);
   fprintf('Optimal error: %f on k = %d\n', err_opt, k_opt);
-  fprintf('Execution time: %f\n', toc);
+  fprintf('Execution time: %f\n\n', toc);
 end

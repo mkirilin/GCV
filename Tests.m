@@ -9,25 +9,49 @@ dispres = 'manyplots';
 LW = 2;  % Plot line width
 MS = 10; % Size of markers on plots
 
-rng(0);  % Make sure this test is repeatable.
+numTests = 2;
+errors_gcv = zeros(numTests,1);
+errors_opt = zeros(numTests,1);
+
 model = 'CT';
 NoiseLevel = 0.1;
 n = 64;
 
-if strcmp(model, 'blur')
-  % Define the test problem.
-  [A, b, x, ProbInfo] = PRblurrotation(n);
-  [bn, NoiseInfo] = PRnoise(b, 'gauss', NoiseLevel);
-  [X_gcv, X_opt] = gcv(A, x, bn, 100);
-elseif strcmp(model, 'CT')
-  n = 64;
-  options = IRset();
-  options.sm = true;
-  [A, b, x, ProbInfo] = PRtomo(n, options);
-  [bn, NoiseInfo] = PRnoise(b, 'gauss', NoiseLevel);
-  [X_gcv, X_opt] = gcv(A, x, bn, 4096);
+for i = 1:numTests
+  fprintf('Test %d\n', i);
+  rng(i);  % Set seed for reproducibility
+
+  if strcmp(model, 'blur')
+    % Define the test problem.
+    [A, b, x, ProbInfo] = PRblurrotation(n);
+    [bn, NoiseInfo] = PRnoise(b, 'gauss', NoiseLevel);
+    [X_gcv, X_opt] = gcv(A, x, bn, 100);
+  elseif strcmp(model, 'CT')
+    options = IRset();
+    options.sm = true;
+    [A, b, x, ProbInfo] = PRtomo(n, options);
+    NoiseLevel = norm(b) / sqrt(size(b,1));
+    [bn, NoiseInfo] = PRnoise(b, 'gauss', NoiseLevel);
+    [X_gcv, X_opt] = gcv(A, x, bn, 4096);
+  end
+  errors_gcv(i) = norm(X_gcv - x);
+  errors_opt(i) = norm(X_opt - x);
 end
 
+%figure(10), clf;
+%boxplot([errors_gcv, errors_opt], {'GCV','Optimal'});
+%title('Error Distribution over 10 Runs');
+% Plot a boxplot of errors_gcv in blue and errors_opt in red
+figure(10), clf;
+boxplot(errors_gcv, 'Color', 'b');
+hold on;
+boxplot(errors_opt, 'Color', 'r');
+title('Error Distribution over 10 Runs');
+xlabel('Method');
+ylabel('Error');
+legend('GCV', 'Optimal');
+
+%return
 % Display the reconstructions;
 % uncomment as appropriate to avoid displaying titles and legends
 figure(1), clf
