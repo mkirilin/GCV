@@ -1,4 +1,4 @@
-function [X, Xopt] = IRgcv(A,x,b,m0)
+function [X, Xopt] = gcv(A,x,b,m0)
   % Calculate execution time of this function
   tic;
   % Find singular vectors of sparce matrix A

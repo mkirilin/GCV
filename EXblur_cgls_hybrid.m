@@ -23,7 +23,7 @@ NoiseLevel = 0.01;
 n = 64;
 [A, b, x, ProbInfo] = PRblurrotation(n);
 [bn, NoiseInfo] = PRnoise(b, 'gauss', NoiseLevel);
-[X_gcv, X_opt] = IRgcv(A, x, bn, 100);
+[X_gcv, X_opt] = gcv(A, x, bn, 100);
 
 % Display the reconstructions;
 % uncomment as appropriate to avoid displaying titles and legends
@@ -131,7 +131,7 @@ options = IRset();
 options.sm = true;
 [A, b, x, ProbInfo] = PRtomo(n, options);
 [bn, NoiseInfo] = PRnoise(b, 'gauss', NoiseLevel);
-[X_gcv_tomo, X_opt_tomo] = IRgcv(A, x, bn, 4096);
+[X_gcv_tomo, X_opt_tomo] = gcv(A, x, bn, 4096);
 
 
 figure(10), clf
