@@ -19,25 +19,13 @@ MS = 10; % Size of markers on plots
 rng(0);  % Make sure this test is repeatable.
 
 % Define the test problem.
-NoiseLevel = 0.01;
-n = 128;
+NoiseLevel = 0.1;
+n = 64;
 [A, b, x, ProbInfo] = PRblurrotation(n);
 [bn, NoiseInfo] = PRnoise(b, 'gauss', NoiseLevel);
 
-% Run CGLS, use the true image to compute error norms, and find iteration
-% where error is minimum (i.e., investigate semi-convergence).
-%options = IRset('x_true', x);
-%[X, IterInfo_cgls] = IRcgls(A, bn, options);
-
-% Now use CGLS with the discrepancy principle as a stopping criterion.
-% Use a large safety factor eta to simulate a situation where the noise
-% level is quite uncertain.
-%options = IRset(options, 'NoiseLevel', NoiseLevel);
-%[X_cgls_dp, IterInfo_cgls_dp] = IRcgls(A, bn, options);
-
 % GCV
-[X_gcv] = IRgcv(A, x, bn);
-
+[X_gcv, X_opt] = IRgcv(A, x, bn, 1024);
 
 % Display the reconstructions;
 % uncomment as appropriate to avoid displaying titles and legends
@@ -66,19 +54,13 @@ strcmp(dispres, 'manyplots')
     % title('Error history','interpreter','latex','fontsize',18)
     %axis([0,100,0.15,IterInfo_cgls.Enrm(1)])
     %
-    %figure(4), clf
-    %PRshowx(IterInfo_cgls.BestReg.X, ProbInfo)
-    %title(['Best CGLS sol., $k$ = ' num2str(IterInfo_cgls.BestReg.It)],...
-    %'interpreter','latex','fontsize',18)
-    %
-    %figure(5), clf
-    %PRshowx(X_cgls_dp, ProbInfo)
-    %title(['DP CGLS sol., $k$ = ',num2str(IterInfo_cgls_dp.StopReg.It)],...
-    %'interpreter','latex','fontsize',18)
-    %
-    figure(6), clf
+    figure(3), clf
     PRshowx(X_gcv, ProbInfo)
     title('GCV sol.',...
+    'interpreter','latex','fontsize',18)
+    figure(4), clf
+    PRshowx(X_opt, ProbInfo)
+    title('Optimal sol.',...
     'interpreter','latex','fontsize',18)
 
 return

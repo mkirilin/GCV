@@ -1,25 +1,32 @@
-function [X] = IRgcv(A,x,b)
+function [X, Xopt] = IRgcv(A,x,b,m0)
+  % Calculate execution time of this function
+  tic;
   % Find singular vectors of sparce matrix A
   m = size(A,1);
-  disp(m);
-  [U,S,V] = svds(A, m, "largest");
+  assert(m0 <= m, 'm0 must be less than or equal to the number of rows of A');
+  fprintf('m = %d, m0 = %d\n', m, m0);
+  [U,S,V] = svds(A, m0);
 
-  % TODO: take leading singular values k <= m0 = #singular
+  % set log scale
+  fprintf('Singular values: Done\n');
 
   % Precompute squared dot products
   s = (U' * b).^2;
 
   % Compute cumulative sums in reverse order
-  cs_rev = cumsum(s, 'reverse');
+  cs_rev = cumsum(s);
+
+  % Compute norm of b
+  b_norm = norm(b)^2;
 
   % Define k range
-  k_values = (0:floor(m/2));
+  k_values = (0:m0-1);
 
   % Compute denominators for all k
   denom = (1 - k_values / m).^2;
 
   % Compute current sums for all k
-  current_sums = cs_rev(k_values + 1)' ./ denom;
+  current_sums = (b_norm - cs_rev(k_values + 1)') ./ denom;
 
   % Find k that minimizes the current sum
   [~, idx] = min(current_sums);
@@ -49,4 +56,5 @@ function [X] = IRgcv(A,x,b)
   % Print results
   fprintf('GCV error: %f on k = %d\n', err_gcv, argmin_k);
   fprintf('Optimal error: %f on k = %d\n', err_opt, k_opt);
+  fprintf('Execution time: %f\n', toc);
 end
