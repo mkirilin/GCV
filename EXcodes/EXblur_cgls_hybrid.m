@@ -23,8 +23,6 @@ NoiseLevel = 0.01;
 n = 64;
 [A, b, x, ProbInfo] = PRblurrotation(n);
 [bn, NoiseInfo] = PRnoise(b, 'gauss', NoiseLevel);
-
-% GCV
 [X_gcv, X_opt] = IRgcv(A, x, bn, 100);
 
 % Display the reconstructions;
@@ -126,3 +124,32 @@ elseif strcmp(dispres, 'manyplots')
     saveas(figure(4), 'EXblur_cgls_hybrid_d.fig')
 end
 cd(oldcd)
+
+n = 64;
+NoiseLevel = 0.1;
+options = IRset();
+options.sm = true;
+[A, b, x, ProbInfo] = PRtomo(n, options);
+[bn, NoiseInfo] = PRnoise(b, 'gauss', NoiseLevel);
+[X_gcv_tomo, X_opt_tomo] = IRgcv(A, x, bn, 4096);
+
+
+figure(10), clf
+PRshowx(x, ProbInfo)
+set(gca,'fontsize',24)
+title('True solution','interpreter','latex','fontsize',18)
+
+figure(20), clf
+PRshowb(b, ProbInfo)
+set(gca,'fontsize',24)
+title('Noisy data','interpreter','latex','fontsize',18)
+
+figure(30), clf
+PRshowx(X_gcv_tomo, ProbInfo)
+set(gca,'fontsize',24)
+title('GCV sol.','interpreter','latex','fontsize',18)
+
+figure(40), clf
+PRshowx(X_opt_tomo, ProbInfo)
+set(gca,'fontsize',24)
+title('Opt sol.','interpreter','latex','fontsize',18)

@@ -3,6 +3,7 @@ function [X, Xopt] = IRgcv(A,x,b,m0)
   tic;
   % Find singular vectors of sparce matrix A
   m = size(A,1);
+  fprintf('dims of A: %d x %d\n', size(A,1), size(A,2));
   assert(m0 <= m, 'm0 must be less than or equal to the number of rows of A');
   fprintf('m = %d, m0 = %d\n', m, m0);
   [U,S,V] = svds(A, m0);
