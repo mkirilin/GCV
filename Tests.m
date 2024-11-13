@@ -10,32 +10,36 @@ LW = 2;  % Plot line width
 MS = 10; % Size of markers on plots
 
 numTests = 2;
-errors_gcv = zeros(numTests,1);
-errors_opt = zeros(numTests,1);
+SNR = 10.^(0:8)';
+errors_gcv = zeros(numTests,size(SNR,1));
+errors_opt = zeros(numTests,size(SNR,1));
 
 model = 'CT';
 NoiseLevel = 0.1;
 n = 64;
 
 for i = 1:numTests
-  fprintf('Test %d\n', i);
-  rng(i);  % Set seed for reproducibility
+  for j = 1:size(SNR,1)
+    fprintf('Test %d, SNR = %f\n', i, SNR(j));
+    rng(i);  % Set seed for reproducibility
 
-  if strcmp(model, 'blur')
-    % Define the test problem.
-    [A, b, x, ProbInfo] = PRblurrotation(n);
-    [bn, NoiseInfo] = PRnoise(b, 'gauss', NoiseLevel);
-    [X_gcv, X_opt] = gcv(A, x, bn, 100);
-  elseif strcmp(model, 'CT')
-    options = IRset();
-    options.sm = true;
-    [A, b, x, ProbInfo] = PRtomo(n, options);
-    NoiseLevel = norm(b) / sqrt(size(b,1));
-    [bn, NoiseInfo] = PRnoise(b, 'gauss', NoiseLevel);
-    [X_gcv, X_opt] = gcv(A, x, bn, 4096);
+    if strcmp(model, 'blur')
+      % Define the test problem.
+      [A, b, x, ProbInfo] = PRblurrotation(n);
+      NoiseLevel = norm(b) / sqrt(size(b,1));
+      [bn, NoiseInfo] = PRnoise(b, 'gauss', NoiseLevel);
+      [X_gcv, X_opt] = gcv(A, x, bn, 100);
+    elseif strcmp(model, 'CT')
+      options = IRset();
+      options.sm = true;
+      [A, b, x, ProbInfo] = PRtomo(n, options);
+      NoiseLevel = norm(b) / (sqrt(size(b,1)) * SNR(j));
+      [bn, NoiseInfo] = PRnoise(b, 'gauss', NoiseLevel);
+      [X_gcv, X_opt] = gcv(A, x, bn, 4096);
+    end
+    errors_gcv(i,j) = norm(X_gcv - x);
+    errors_opt(i,j) = norm(X_opt - x);
   end
-  errors_gcv(i) = norm(X_gcv - x);
-  errors_opt(i) = norm(X_opt - x);
 end
 
 %figure(10), clf;
@@ -43,9 +47,9 @@ end
 %title('Error Distribution over 10 Runs');
 % Plot a boxplot of errors_gcv in blue and errors_opt in red
 figure(10), clf;
-boxplot(errors_gcv, 'Color', 'b');
+boxplot(errors_gcv, 'Color', 'b', 'PlotStyle','compact');
 hold on;
-boxplot(errors_opt, 'Color', 'r');
+boxplot(errors_opt, 'Color', 'r', 'PlotStyle','compact');
 title('Error Distribution over 10 Runs');
 xlabel('Method');
 ylabel('Error');
