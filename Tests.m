@@ -11,8 +11,13 @@ MS = 10; % Size of markers on plots
 numTests = 5;
 SNR = 10.^(0:8)';
 
-model = 'CT';  % Choose between 'blur' and 'CT'
-n_values = [64, 128];  % List of n values to iterate over
+model = 'blur';  % Choose between 'blur' and 'CT'
+n_values = [64, 32];  % List of n values to iterate over
+
+resultsDir = fullfile(fileparts(mfilename('fullpath')), 'Results');
+if ~exist(resultsDir, 'dir')
+    mkdir(resultsDir);
+end
 
 for n = n_values
   % Define the test problem
@@ -40,7 +45,7 @@ for n = n_values
   plotResults(testData, SNR, n);
 
   % Save figures if needed
-  saveFigures(dispres, n);
+  saveFigures(dispres, n, resultsDir);
 end
 
 % Display the reconstructions
@@ -92,17 +97,6 @@ end
 
 % Function to save figures
 function saveFigures(dispres, n)
-  currentFolder = fileparts(mfilename('fullpath'));
-  cd(currentFolder);
-  oldcd = cd;
-
-  try
-    cd('Results');
-  catch
-    mkdir('Results');
-    cd('Results');
-  end
-
   if strcmp(dispres, 'subplots')
     saveFigure(['AllPlots_n', num2str(n), '.eps'], 1);
   elseif strcmp(dispres, 'manyplots')
