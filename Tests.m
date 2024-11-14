@@ -11,8 +11,8 @@ MS = 10; % Size of markers on plots
 numTests = 5;
 SNR = 10.^(0:8)';
 
-model = 'blur';  % Choose between 'blur' and 'CT'
-n_values = [64, 32];  % List of n values to iterate over
+model = 'CT';  % Choose between 'blur' and 'CT'
+n_values = [64, 128];  % List of n values to iterate over
 
 resultsDir = fullfile(fileparts(mfilename('fullpath')), 'Results');
 if ~exist(resultsDir, 'dir')
@@ -96,17 +96,16 @@ function displayReconstructions(x, b, X_gcv, X_opt, ProbInfo)
 end
 
 % Function to save figures
-function saveFigures(dispres, n)
+function saveFigures(dispres, n, resultsDir)
   if strcmp(dispres, 'subplots')
-    saveFigure(['AllPlots_n', num2str(n), '.eps'], 1);
+    saveFigure(fullfile(resultsDir, ['AllPlots_n', num2str(n), '.eps']), 1);
   elseif strcmp(dispres, 'manyplots')
-    saveFigure(['Orig_n', num2str(n), '.eps'], 1);
-    saveFigure(['Signal_n', num2str(n), '.eps'], 2);
-    saveFigure(['GCV_n', num2str(n), '.eps'], 3);
-    saveFigure(['Opt_n', num2str(n), '.eps'], 4);
-    saveFigure(['Errors_n', num2str(n), '.eps'], 10);
+    saveFigure(fullfile(resultsDir, ['Orig_n', num2str(n), '.eps']), 1);
+    saveFigure(fullfile(resultsDir, ['Signal_n', num2str(n), '.eps']), 2);
+    saveFigure(fullfile(resultsDir, ['GCV_n', num2str(n), '.eps']), 3);
+    saveFigure(fullfile(resultsDir, ['Opt_n', num2str(n), '.eps']), 4);
+    saveFigure(fullfile(resultsDir, ['Errors_n', num2str(n), '.eps']), 10);
   end
-  cd(oldcd);
 end
 
 % Helper function to save a figure
