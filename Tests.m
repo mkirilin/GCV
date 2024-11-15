@@ -12,7 +12,7 @@ numTests = 5;
 SNR = 10.^(0:8)';
 
 model = 'CT';  % Choose between 'blur' and 'CT'
-n_values = [64, 128];  % List of n values to iterate over
+n_values = [32];  % List of n values to iterate over
 
 resultsDir = fullfile(fileparts(mfilename('fullpath')), 'Results');
 if ~exist(resultsDir, 'dir')
@@ -24,7 +24,8 @@ for n = n_values
   [A, b, x, ProbInfo, m0] = defineTestProblem(model, n);
   % Plot singular values decay of A
   figure(5); clf;
-  [~,S,~] = svds(A, m0);
+  m_sv = min(size(A));
+  [~,S,~] = svds(A, m_sv);
   loglog(diag(S), 'linewidth', LW);
   title('Singular values decay of A', 'interpreter', 'latex', 'fontsize', 18);
 
@@ -66,11 +67,7 @@ function [A, b, x, ProbInfo, m0] = defineTestProblem(model, n)
   elseif strcmp(model, 'CT')
     options = IRset();
     options.sm = true;
-    if n == 64
-      m0 = 4096;
-    elseif n == 128
-      m0 = 16384;
-    end
+    m0 = 500;
     [A, b, x, ProbInfo] = PRtomo(n, options);
   end
 end
@@ -84,8 +81,10 @@ function plotResults(testData, SNR, n)
   title(['Results for n = ', num2str(n)]);
   ylabel('Relative error');
   xlabel('SNR');
+  set(gca,'XTickLabels', {'1', '10^{1}', '10^{2}', '10^{3}', '10^{4}', '10^{5}', '10^{6}', '10^{7}', '10^{8}'});
   ax = gca;
   ax.YAxis.Scale ="log";
+  ylim(ax, ylim(ax) + [-1,1]*range(ylim(ax)).* 0.05)
   legend()
 end
 

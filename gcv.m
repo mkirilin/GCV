@@ -10,7 +10,9 @@ function [X, Xopt, err_gcv, err_opt] = gcv(A,x,b,m0)
   fprintf('SVDS Execution time: %f\n', toc);
 
   % Precompute squared dot products
-  s = (U' * b).^2;
+  s = (U' * b).^2; % k in [1,...,m0]
+  s = [0; s]; % Add 0 to the beginning, size of s is m0+1
+  s = s(1:end-1); % Remove last element
 
   % Compute cumulative sums
   cs = cumsum(s);
@@ -22,7 +24,7 @@ function [X, Xopt, err_gcv, err_opt] = gcv(A,x,b,m0)
   k_values = (0:m0-1);
 
   % Compute denominators for all k
-  denom = (1 - k_values / m).^2;
+  denom = (1 - (k_values) / m).^2;
 
   % Compute current sums for all k
   current_sums = (b_norm - cs(k_values + 1)') ./ denom;
