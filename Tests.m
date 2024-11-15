@@ -22,6 +22,11 @@ end
 for n = n_values
   % Define the test problem
   [A, b, x, ProbInfo, m0] = defineTestProblem(model, n);
+  % Plot singular values decay of A
+  figure(5); clf;
+  [~,S,~] = svds(A, m0);
+  loglog(diag(S), 'linewidth', LW);
+  title('Singular values decay of A', 'interpreter', 'latex', 'fontsize', 18);
 
   NoiseLevel = (norm(b) / sqrt(size(b,1))) ./ SNR;
   % Preallocate table for test data
@@ -48,7 +53,7 @@ for n = n_values
   displayReconstructions(x, b, X_gcv, X_opt, ProbInfo);
 
   % Save figures if needed
-  saveFigures(dispres, n, resultsDir);
+  saveFigures(dispres, n, resultsDir, model);
 end
 
 
@@ -56,7 +61,7 @@ end
 % Function to define the test problem
 function [A, b, x, ProbInfo, m0] = defineTestProblem(model, n)
   if strcmp(model, 'blur')
-    m0 = 100;
+    m0 = n*n;
     [A, b, x, ProbInfo] = PRblurrotation(n);
   elseif strcmp(model, 'CT')
     options = IRset();
@@ -106,15 +111,16 @@ function displayReconstructions(x, b, X_gcv, X_opt, ProbInfo)
 end
 
 % Function to save figures
-function saveFigures(dispres, n, resultsDir)
+function saveFigures(dispres, n, resultsDir, model)
   if strcmp(dispres, 'subplots')
-    saveFigure(fullfile(resultsDir, ['AllPlots_n', num2str(n), '.png']), 1);
+    saveFigure(fullfile(resultsDir, ['AllPlots_n', num2str(n), model, '.png']), 1);
   elseif strcmp(dispres, 'manyplots')
-    saveFigure(fullfile(resultsDir, ['Orig_n', num2str(n), '.eps']), 1);
-    saveFigure(fullfile(resultsDir, ['Signal_n', num2str(n), '.eps']), 2);
-    saveFigure(fullfile(resultsDir, ['GCV_n', num2str(n), '.eps']), 3);
-    saveFigure(fullfile(resultsDir, ['Opt_n', num2str(n), '.eps']), 4);
-    saveFigure(fullfile(resultsDir, ['Errors_n', num2str(n), '.pdf']), 10);
+    saveFigure(fullfile(resultsDir, ['Orig_n', num2str(n), model, '.eps']), 1);
+    saveFigure(fullfile(resultsDir, ['Signal_n', num2str(n), model, '.eps']), 2);
+    saveFigure(fullfile(resultsDir, ['GCV_n', num2str(n), model, '.eps']), 3);
+    saveFigure(fullfile(resultsDir, ['Opt_n', num2str(n), model, '.eps']), 4);
+    saveFigure(fullfile(resultsDir, ['SVdecay_n', num2str(n), model, '.pdf']), 5);
+    saveFigure(fullfile(resultsDir, ['Errors_n', num2str(n), model, '.pdf']), 10);
   end
 end
 
