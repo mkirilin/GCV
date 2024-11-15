@@ -12,8 +12,8 @@ function [X, Xopt, err_gcv, err_opt] = gcv(A,x,b,m0)
   % Precompute squared dot products
   s = (U' * b).^2;
 
-  % Compute cumulative sums in reverse order
-  cs_rev = cumsum(s);
+  % Compute cumulative sums
+  cs = cumsum(s);
 
   % Compute norm of b
   b_norm = norm(b)^2;
@@ -25,7 +25,7 @@ function [X, Xopt, err_gcv, err_opt] = gcv(A,x,b,m0)
   denom = (1 - k_values / m).^2;
 
   % Compute current sums for all k
-  current_sums = (b_norm - cs_rev(k_values + 1)') ./ denom;
+  current_sums = (b_norm - cs(k_values + 1)') ./ denom;
 
   % Find k that minimizes the current sum
   [~, idx] = min(current_sums);
@@ -41,7 +41,7 @@ function [X, Xopt, err_gcv, err_opt] = gcv(A,x,b,m0)
   errs = vecnorm(X_cumsum - x, 2, 1);
   
   % Find k that minimizes the error
-  [err_opt, k_opt] = min(errs);
+  [~, k_opt] = min(errs);
   
   % Compute X using vectorized operations
   X = X_cumsum(:, argmin_k);

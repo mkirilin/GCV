@@ -44,12 +44,13 @@ for n = n_values
   % Plot results
   plotResults(testData, SNR, n);
 
+  % Display the reconstructions
+  displayReconstructions(x, b, X_gcv, X_opt, ProbInfo);
+
   % Save figures if needed
   saveFigures(dispres, n, resultsDir);
 end
 
-% Display the reconstructions
-displayReconstructions(x, b, X_gcv, X_opt, ProbInfo);
 
 
 % Function to define the test problem
@@ -60,7 +61,11 @@ function [A, b, x, ProbInfo, m0] = defineTestProblem(model, n)
   elseif strcmp(model, 'CT')
     options = IRset();
     options.sm = true;
-    m0 = 200;
+    if n == 64
+      m0 = 4096;
+    elseif n == 128
+      m0 = 16384;
+    end
     [A, b, x, ProbInfo] = PRtomo(n, options);
   end
 end
@@ -72,6 +77,11 @@ function plotResults(testData, SNR, n)
    {'1', '1e1', '1e2', '1e3', '1e4', '1e5', '1e6', '1e7', '1e8'});
   boxchart(testData.SNR, testData.Error, 'GroupByColor', testData.Method);
   title(['Results for n = ', num2str(n)]);
+  ylabel('Relative error');
+  xlabel('SNR');
+  ax = gca;
+  ax.YAxis.Scale ="log";
+  legend()
 end
 
 % Function to display reconstructions
@@ -98,13 +108,13 @@ end
 % Function to save figures
 function saveFigures(dispres, n, resultsDir)
   if strcmp(dispres, 'subplots')
-    saveFigure(fullfile(resultsDir, ['AllPlots_n', num2str(n), '.eps']), 1);
+    saveFigure(fullfile(resultsDir, ['AllPlots_n', num2str(n), '.png']), 1);
   elseif strcmp(dispres, 'manyplots')
     saveFigure(fullfile(resultsDir, ['Orig_n', num2str(n), '.eps']), 1);
     saveFigure(fullfile(resultsDir, ['Signal_n', num2str(n), '.eps']), 2);
     saveFigure(fullfile(resultsDir, ['GCV_n', num2str(n), '.eps']), 3);
     saveFigure(fullfile(resultsDir, ['Opt_n', num2str(n), '.eps']), 4);
-    saveFigure(fullfile(resultsDir, ['Errors_n', num2str(n), '.eps']), 10);
+    saveFigure(fullfile(resultsDir, ['Errors_n', num2str(n), '.pdf']), 10);
   end
 end
 
