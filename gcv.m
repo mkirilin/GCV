@@ -3,8 +3,9 @@ function [X, Xopt, err_gcv, err_opt] = gcv(A,x,b,m0)
   tic;
   % Find singular vectors of sparce matrix A
   m = size(A,1);
+  m_sv = min(size(A));
   fprintf('dims of A: %d x %d\n', size(A,1), size(A,2));
-  assert(m0 <= m, 'm0 must be less than or equal to the number of rows of A');
+  assert(m0 <= m_sv, 'm0 must be less than or equal to the number of rows of A');
   fprintf('m = %d, m0 = %d\n', m, m0);
   [U,S,V] = svds(A, m0);
   fprintf('SVDS Execution time: %f\n', toc);
@@ -12,7 +13,9 @@ function [X, Xopt, err_gcv, err_opt] = gcv(A,x,b,m0)
   % Precompute squared dot products
   s = (U' * b).^2; % k in [1,...,m0]
   s = [0; s]; % Add 0 to the beginning, size of s is m0+1
-  s = s(1:end-1); % Remove last element
+  if m0 == m
+    s = s(1:end-1); % Remove last element
+  end
 
   % Compute cumulative sums
   cs = cumsum(s);
@@ -21,7 +24,11 @@ function [X, Xopt, err_gcv, err_opt] = gcv(A,x,b,m0)
   b_norm = norm(b)^2;
 
   % Define k range
-  k_values = (0:m0-1);
+  if m0 == m
+    k_values = (0:m0-1);
+  else
+    k_values = (0:m0);
+  end
 
   % Compute denominators for all k
   denom = (1 - (k_values) / m).^2;
