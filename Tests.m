@@ -22,10 +22,16 @@ end
 for n = n_values
   % Define the test problem
   [A, b, x, ProbInfo, m0] = defineTestProblem(model, n);
+  m = size(A,1);
+  % Find all non-zero singular vectors of sparce matrix A
+  m_sv = min(size(A));
+  fprintf('dims of A: %d x %d\n', size(A,1), size(A,2));
+  assert(m0 <= m_sv, 'm0 must be less than or equal to the number of rows of A');
+  fprintf('m = %d, m0 = %d\n', m, m0);
+  [U,S,V] = svds(A, m_sv);
+
   % Plot singular values decay of A
   figure(5); clf;
-  m_sv = min(size(A));
-  [~,S,~] = svds(A, m_sv);
   loglog(diag(S), 'linewidth', LW);
   title('Singular values decay of A', 'interpreter', 'latex', 'fontsize', 18);
 
@@ -40,7 +46,8 @@ for n = n_values
       rng(j);  % Set seed for reproducibility
 
       [bn, NoiseInfo] = PRnoise(b, 'gauss', NoiseLevel(i));
-      [X_gcv, X_opt, error_gcv, error_opt] = gcv(A, x, bn, m0);
+      [X_gcv, X_opt, error_gcv, error_opt] =...
+        gcv(U(:,1:m0), S(1:m0, 1:m0), V(:,1:m0), x, bn, m0, m);
       testData = [testData; table(SNR(i), error_gcv, "gcv",...
                                   'VariableNames', {'SNR', 'Error', 'Method'})];
       testData = [testData; table(SNR(i), error_opt, "opt",...

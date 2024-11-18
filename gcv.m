@@ -1,14 +1,4 @@
-function [X, Xopt, err_gcv, err_opt] = gcv(A,x,b,m0)
-  % Calculate execution time of this function
-  tic;
-  % Find singular vectors of sparce matrix A
-  m = size(A,1);
-  m_sv = min(size(A));
-  fprintf('dims of A: %d x %d\n', size(A,1), size(A,2));
-  assert(m0 <= m_sv, 'm0 must be less than or equal to the number of rows of A');
-  fprintf('m = %d, m0 = %d\n', m, m0);
-  [U,S,V] = svds(A, m0);
-  fprintf('SVDS Execution time: %f\n', toc);
+function [X, Xopt, err_gcv, err_opt] = gcv(U, S, V,x,b,m0,m)
 
   % Precompute squared dot products
   s = (U' * b).^2; % k in [1,...,m0]
@@ -43,7 +33,7 @@ function [X, Xopt, err_gcv, err_opt] = gcv(A,x,b,m0)
   % Compute cumulative coefficients
   coeffs_all = (U' * b) ./ diag(S);
 
-  % Compute cumulative solutions X for all k
+  % Compute cumulative solutions X for all k <= m0
   X_cumsum = cumsum(V .* coeffs_all', 2);
   
   % Compute errors for each k
@@ -63,6 +53,5 @@ function [X, Xopt, err_gcv, err_opt] = gcv(A,x,b,m0)
 
   % Print results
   fprintf('GCV error: %f on k = %d\n', err_gcv, argmin_k);
-  fprintf('Optimal error: %f on k = %d\n', err_opt, k_opt);
-  fprintf('Execution time: %f\n\n', toc);
+  fprintf('Optimal error: %f on k = %d\n\n', err_opt, k_opt);
 end
