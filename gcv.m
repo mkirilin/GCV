@@ -1,4 +1,4 @@
-function [X, Xopt, err_gcv, err_opt] = gcv(U, S, V,x,b,m0,m)
+function [X, Xopt, err_gcv, err_opt, argmin_k, k_opt] = gcv(U, S, V,x,b,m0,m)
 
   % Precompute squared dot products
   s = (U' * b).^2; % k in [1,...,m0]
