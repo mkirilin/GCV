@@ -79,14 +79,14 @@ function [A, b, x, ProbInfo, m0] = defineTestProblem(model, n)
   elseif strcmp(model, 'CT')
     options = IRset();
     options.sm = true;
-    m0 = 500;
+    m0 = n*n;
     [A, b, x, ProbInfo] = PRtomo(n, options);
   elseif strcmp(model, 'blurGauss')
     options = IRset();
     options.BlurLevel = 'mild';
-    m0 = 4096;
+    m0 = n*n;
     [~, b, x, ProbInfo] = PRblurgauss(n, options);
-    A = psf2A(ProbInfo.psf, 'symmetric');
+    A = psf2A(ProbInfo.psf, n);
   else
     error('Invalid model');
   end
@@ -166,27 +166,30 @@ function saveFigure(filename, figNumber)
   exportgraphics(figure(figNumber), filename);
 end
 
-function A = psf2A(psf, bc)
-  assert(size(psf, 1) == size(psf, 2));
-  m = size(psf, 1);
-  nzmax = m * m * nnz(psf);
-  A_i = zeros(nzmax, 1);
-  A_j = zeros(nzmax, 1);
-  A_s = zeros(nzmax, 1);
-  idx = 1;
-  for i = 1:m * m
-      x = zeros(m, m);
-      x(i) = 1;
-      x_conv_psf = imfilter(x, psf, 'conv', 'same', bc);
-      [row, col, val] = find(x_conv_psf);
-      numVals = length(val);
-      A_i(idx:idx+numVals-1) = sub2ind([m, m], row, col);
-      A_j(idx:idx+numVals-1) = i;
-      A_s(idx:idx+numVals-1) = val;
-      idx = idx + numVals;
-  end
-  A_i = A_i(1:idx-1);
-  A_j = A_j(1:idx-1);
-  A_s = A_s(1:idx-1);
-  A = sparse(A_i, A_j, A_s, m * m, m * m);
+function A = psf2A(psf, n)
+  % Signal Processing Toolbox required
+  A_full = convmtx2(psf, n, n);
+  % Calculate the output size of the full convolution
+  outRows = n + n - 1;
+  outCols = n + n - 1;
+
+  % Calculate the amount of padding
+  padRows = outRows - n;
+  padCols = outCols - n;
+
+  % Calculate starting and ending indices for rows and columns
+  rowStart = floor(padRows / 2) + 1;
+  rowEnd = rowStart + n - 1;
+
+  colStart = floor(padCols / 2) + 1;
+  colEnd = colStart + n - 1;
+
+  % Generate row indices for the 'same' convolution result
+  [sameRowIndices, sameColIndices] = ndgrid(rowStart:rowEnd, colStart:colEnd);
+  sameLinearIndices = sub2ind([outRows, outCols], sameRowIndices(:), sameColIndices(:));
+
+  % Extract the rows corresponding to the 'same' convolution
+  A = A_full(sameLinearIndices, :);
+
+  A = sparse(A);
 end

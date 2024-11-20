@@ -1,4 +1,4 @@
-function [X, Xopt, err_gcv, err_opt, argmin_k, k_opt] = gcv(U, S, V,x,b,m0,m)
+function [Xgcv, Xopt, err_gcv, err_opt, k_gcv, k_opt] = gcv(U, S, V,x,b,m0,m)
 
   % Precompute squared dot products
   s = (U' * b).^2; % k in [1,...,m0]
@@ -28,7 +28,7 @@ function [X, Xopt, err_gcv, err_opt, argmin_k, k_opt] = gcv(U, S, V,x,b,m0,m)
 
   % Find k that minimizes the current sum
   [~, idx] = min(current_sums);
-  argmin_k = k_values(idx);
+  k_gcv = k_values(idx);
 
   % Compute cumulative coefficients
   coeffs_all = (U' * b) ./ diag(S);
@@ -43,15 +43,23 @@ function [X, Xopt, err_gcv, err_opt, argmin_k, k_opt] = gcv(U, S, V,x,b,m0,m)
   [~, k_opt] = min(errs);
   
   % Compute X using vectorized operations
-  X = X_cumsum(:, argmin_k);
+  if k_gcv == 0
+    Xgcv = zeros(size(x));
+  else
+    Xgcv = X_cumsum(:, k_gcv);
+  end
 
   % Compute optimal Xopt
-  Xopt = X_cumsum(:, k_opt);
+  if k_opt == 0
+    Xopt = zeros(size(x));
+  else
+    Xopt = X_cumsum(:, k_opt);
+  end
 
-  err_gcv = norm(X - x) / norm(x);
+  err_gcv = norm(Xgcv - x) / norm(x);
   err_opt = norm(Xopt - x) / norm(x);
 
   % Print results
-  fprintf('GCV error: %f on k = %d\n', err_gcv, argmin_k);
+  fprintf('GCV error: %f on k = %d\n', err_gcv, k_gcv);
   fprintf('Optimal error: %f on k = %d\n\n', err_opt, k_opt);
 end
