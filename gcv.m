@@ -1,14 +1,22 @@
-function [Xgcv, Xopt, err_gcv, err_opt, k_gcv, k_opt] = gcv(U, S, V,x,b,m0,m)
+function [Xgcv, Xopt, err_gcv, err_opt, k_gcv, k_opt] = gcv(U, S, V,x,b,m0,m,allSV)
 
   % Precompute squared dot products
   s = (U' * b).^2; % k in [1,...,m0]
-  s = [0; s]; % Add 0 to the beginning, size of s is m0+1
-  if m0 == m
-    s = s(1:end-1); % Remove last element
+  if allSV
+    s = s(:);
+  else
+    s = [0; s]; % Add 0 to the beginning, size of s is m0+1
   end
+  %if m0 == m
+  %  s = s(1:end-1); % Remove last element
+  %end
 
   % Compute cumulative sums
-  cs = cumsum(s);
+  if allSV
+    cs = cumsum(s, 'reverse');
+  else
+    cs = cumsum(s);
+  end
 
   % Compute norm of b
   b_norm = norm(b)^2;
@@ -24,7 +32,11 @@ function [Xgcv, Xopt, err_gcv, err_opt, k_gcv, k_opt] = gcv(U, S, V,x,b,m0,m)
   denom = (1 - (k_values) / m).^2;
 
   % Compute current sums for all k
-  current_sums = (b_norm - cs(k_values + 1)') ./ denom;
+  if allSV
+    current_sums = cs(k_values + 1)' ./ denom;
+  else
+    current_sums = (b_norm - cs(k_values + 1)') ./ denom;
+  end
 
   % Find k that minimizes the current sum
   [~, idx] = min(current_sums);
