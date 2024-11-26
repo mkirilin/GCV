@@ -103,59 +103,33 @@ end
 % Function to plot results
 function plotErrorResults(testData, n, m0, m, SNR)
   figure(10); clf;
-
-  gcvData = testData(testData.Method == "gcv", :);
-  optData = testData(testData.Method == "opt", :);
   title(['Results for n = ', num2str(n), ', ', num2str(m0), '/', num2str(m),...
         ' singular values'], 'interpreter', 'latex', 'fontsize', 18);
-  %ylim(ax, ylim(ax) + [-1,1]*range(ylim(ax)).* 0.05)
-
+  boxchart(testData.SNR, testData.Error, 'GroupByColor', testData.Method);
+  
   xlabel('SNR');
   xtick=SNR;
   xticklab = cellstr(num2str(round(log10(xtick(:))), '10^{%d}'));
   set(gca,'XTickLabel',xticklab,'TickLabelInterpreter','tex')
-
-  ylabel('Relative error');
-  yyaxis left
-  boxchart(gcvData.SNR-0.25, gcvData.Error, 'GroupByColor', gcvData.Method, 'BoxWidth', 0.25);
-  %ylim([0, 0.5]);
-
-  % Plot second y-Axis with SNR for opt
-  yyaxis right
-  boxchart(optData.SNR+0.25, optData.Error, 'GroupByColor', optData.Method, 'BoxWidth', 0.25);
-  %ylim([0, 0.5]);
-
   ax = gca;
-  ax.YAxis(1).Scale ="log";
-  ax.YAxis(2).Scale ="log";
-  %ax.YAxis.Scale ="log";
+  ylabel('Relative error');
+  ax.YAxis.Scale ="log";
   legend()
 end
 
 function plotKResults(kData, n, m0, m, SNR)
   figure(11); clf;
-
-  gcvData = kData(kData.Method == "gcv", :);
-  optData = kData(kData.Method == "opt", :);
   title(['Results for n = ', num2str(n), ', ', num2str(m0), '/', num2str(m), ' singular values'],...
         'interpreter', 'latex', 'fontsize', 18);
+  boxchart(kData.SNR, kData.k, 'GroupByColor', kData.Method);
 
   xlabel('SNR');
   xtick=SNR;
   xticklab = cellstr(num2str(round(log10(xtick(:))), '10^{%d}'));
   set(gca,'XTickLabel',xticklab,'TickLabelInterpreter','tex')
-
+  %ax = gca;
   ylabel('k');
-  yyaxis left
-  boxchart(gcvData.SNR-0.25, gcvData.k, 'GroupByColor', gcvData.Method, 'BoxWidth', 0.25);
-
-  % Plot second y-Axis with SNR for opt
-  yyaxis right
-  boxchart(optData.SNR+0.25, optData.k, 'GroupByColor', optData.Method, 'BoxWidth', 0.25);
-
-  ax = gca;
-  ax.YAxis(1).Scale ="log";
-  ax.YAxis(2).Scale ="log";
+  %ax.YAxis.Scale ="log";
   legend()
 end
 
