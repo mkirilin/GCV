@@ -37,7 +37,7 @@ for n = n_values
 
   % Plot singular values decay of A
   figure(5); clf;
-  loglog(diag(S), 'linewidth', LW);
+  semilogy(diag(S), 'linewidth', LW);
   title('Singular values decay of A', 'interpreter', 'latex', 'fontsize', 18);
 
   NoiseLevel = (norm(b) / sqrt(size(b,1))) ./ SNR;
@@ -66,8 +66,8 @@ for n = n_values
     end
   end
   % Plot results
-  plotErrorResults(testData, n, m0, m);
-  plotKResults(kData, n, m0, m);
+  plotErrorResults(testData, n, m0, m, SNR);
+  plotKResults(kData, n, m0, m, SNR);
 
   % Display the reconstructions
   displayReconstructions(x, b, X_gcv, X_opt, ProbInfo);
@@ -84,6 +84,7 @@ function [A, b, x, ProbInfo, m0] = defineTestProblem(model, n)
   elseif strcmp(model, 'CT')
     options = IRset();
     options.sm = true;
+    options.CommitCrime = 'on';
     m0 = n*n;
     [A, b, x, ProbInfo] = PRtomo(n, options);
   elseif strcmp(model, 'blurGauss')
@@ -100,7 +101,7 @@ function [A, b, x, ProbInfo, m0] = defineTestProblem(model, n)
 end
 
 % Function to plot results
-function plotErrorResults(testData, n, m0, m)
+function plotErrorResults(testData, n, m0, m, SNR)
   figure(10); clf;
 
   gcvData = testData(testData.Method == "gcv", :);
@@ -110,9 +111,10 @@ function plotErrorResults(testData, n, m0, m)
   %ylim(ax, ylim(ax) + [-1,1]*range(ylim(ax)).* 0.05)
 
   xlabel('SNR');
-  set(gca,'XTickLabels',...
-    {'1' '10^{1}' '10^{2}' '10^{3}' '10^{4}' '10^{5}' '10^{6}' '10^{7}' '10^{8}'});
-    
+  xtick=SNR;
+  xticklab = cellstr(num2str(round(log10(xtick(:))), '10^{%d}'));
+  set(gca,'XTickLabel',xticklab,'TickLabelInterpreter','tex')
+
   ylabel('Relative error');
   yyaxis left
   boxchart(gcvData.SNR-0.25, gcvData.Error, 'GroupByColor', gcvData.Method, 'BoxWidth', 0.25);
@@ -130,7 +132,7 @@ function plotErrorResults(testData, n, m0, m)
   legend()
 end
 
-function plotKResults(kData, n, m0, m)
+function plotKResults(kData, n, m0, m, SNR)
   figure(11); clf;
 
   gcvData = kData(kData.Method == "gcv", :);
@@ -139,9 +141,10 @@ function plotKResults(kData, n, m0, m)
         'interpreter', 'latex', 'fontsize', 18);
 
   xlabel('SNR');
-  set(gca,'XTickLabels',...
-    {'1' '10^{1}' '10^{2}' '10^{3}' '10^{4}' '10^{5}' '10^{6}' '10^{7}' '10^{8}'});
-  
+  xtick=SNR;
+  xticklab = cellstr(num2str(round(log10(xtick(:))), '10^{%d}'));
+  set(gca,'XTickLabel',xticklab,'TickLabelInterpreter','tex')
+
   ylabel('k');
   yyaxis left
   boxchart(gcvData.SNR-0.25, gcvData.k, 'GroupByColor', gcvData.Method, 'BoxWidth', 0.25);
