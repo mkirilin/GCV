@@ -1,7 +1,8 @@
 function [Xgcv, Xopt, err_gcv, err_opt, k_gcv, k_opt] = gcv(U, S, V,x,b,m0,m,allSV)
 
+  coeffs_all = U' * b;
   % Precompute squared dot products
-  s = (U' * b).^2; % k in [1,...,m0]
+  s = coeffs_all.^2; % k in [1,...,m0]
   if allSV
     s = s(:);
   else
@@ -43,7 +44,7 @@ function [Xgcv, Xopt, err_gcv, err_opt, k_gcv, k_opt] = gcv(U, S, V,x,b,m0,m,all
   k_gcv = k_values(idx);
 
   % Compute cumulative coefficients
-  coeffs_all = (U' * b) ./ diag(S);
+  coeffs_all = coeffs_all ./ diag(S);
 
   % Compute cumulative solutions X for all k <= m0
   X_cumsum = cumsum(V .* coeffs_all', 2);

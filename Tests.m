@@ -1,3 +1,7 @@
+% TODO: 1. find optimal SNRs
+%         (a) find optimal SNR for blurGauss
+%         (b) find optimal SNR for CT
+%**************************************
 % Clear workspace and window
 clear; clc;
 
@@ -30,7 +34,7 @@ for n = n_values
   assert(m0 <= m_sv, 'm0 must be less than or equal to the number of rows of A');
   fprintf('m = %d, m0 = %d\n', m, m0);
 
-  if model == "blurGauss"
+  if strcmp(model, 'blurGauss')
     A = sparse(full(A));
   end
   [U,S,V] = svds(A, m_sv);
