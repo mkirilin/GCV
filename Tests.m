@@ -1,6 +1,10 @@
 % TODO: 1. find optimal SNRs
 %         (a) find optimal SNR for blurGauss
+%           (i) 128
+%           (ii) 256
 %         (b) find optimal SNR for CT
+%           (i) 128
+%           (ii) 256
 %**************************************
 % Clear workspace and window
 clear; clc;
@@ -13,10 +17,10 @@ LW = 2;  % Plot line width
 MS = 10; % Size of markers on plots
 
 numTests = 10;
-SNR = 10.^(0:8)';
+SNR = 10.^(-2:4)';
 
 model = 'blurGauss';  % Choose between 'blur', 'blurGauss' and 'CT'
-n_values = [64];  % List of n values to iterate over
+n_values = [128];  % List of n values to iterate over
 
 resultsDir = fullfile(fileparts(mfilename('fullpath')), 'Results');
 if ~exist(resultsDir, 'dir')
@@ -35,9 +39,28 @@ for n = n_values
   fprintf('m = %d, m0 = %d\n', m, m0);
 
   if strcmp(model, 'blurGauss')
-    A = sparse(full(A));
+    [~, S, ~] = svds(A, b, m_sv);
+
+    %D_inv = dctmtx(n)';
+    %U = kron(D_inv, D_inv);  % Size: 4096 x 4096
+    %V = U;
+
+    % Sort singular values in descending order and change U and V accordingly
+    [S, idx] = sort(S, 'descend');
+    %U = U(:, idx);
+    %V = V(:, idx);
+
+    S = diag(S);  % s should be of length 4096
+
+    %A_rec = U * S * V';  % Size: 4096 x 4096
+
+    %difference = norm(full(A) - A_rec);
+    %assert(difference < 1e-8,...
+    %      'Difference between A and A_rec is too large');
+
+  else
+    [U,S,V] = svds(A, m_sv);
   end
-  [U,S,V] = svds(A, m_sv);
 
   % Plot singular values decay of A
   figure(5); clf;
@@ -58,7 +81,7 @@ for n = n_values
 
       [bn, NoiseInfo] = PRnoise(b, 'gauss', NoiseLevel(i));
       [X_gcv, X_opt, error_gcv, error_opt, k_gcv, k_opt] =...
-        gcv(U(:,1:m0), S(1:m0, 1:m0), V(:,1:m0), x, bn, m0, m, false);
+        gcv(S(1:m0, 1:m0), x, bn, m0, m, false, idx, n);
       testData = [testData; table(i, error_gcv, "gcv",...
                                   'VariableNames', {'SNR', 'Error', 'Method'})];
       testData = [testData; table(i, error_opt, "opt",...
@@ -93,9 +116,9 @@ function [A, b, x, ProbInfo, m0] = defineTestProblem(model, n)
     [A, b, x, ProbInfo] = PRtomo(n, options);
   elseif strcmp(model, 'blurGauss')
     options = IRset();
-    options.BlurLevel = 'severe';
-    options.BC = 'zero';
-    options.trueImage = 'satellite';
+    %options.BlurLevel = 'severe';
+    %options.BC = 'zero';
+    %options.trueImage = 'satellite';
     options.CommitCrime = 'on';
     m0 = n*n;
     [A, b, x, ProbInfo] = PRblurgauss(n, options);

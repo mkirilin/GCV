@@ -1,8 +1,16 @@
-function [Xgcv, Xopt, err_gcv, err_opt, k_gcv, k_opt] = gcv(U, S, V,x,b,m0,m,allSV)
+function [Xgcv, Xopt, err_gcv, err_opt, k_gcv, k_opt] = gcv(S,x,b,m0,m,allSV,idx,n)
 
-  coeffs_all = U' * b;
+  %coeffs_all = U' * b;
+
+  b_image = reshape(b, [n, n]);
+  coeffs_all_func = dct2(b_image);
+  coeffs_all_func = coeffs_all_func(:);
+  coeffs_all_func = coeffs_all_func(idx);
+  %assert(norm(coeffs_all - coeffs_all_func) < 1e-8,...
+  %      'Error: coeffs_all and coeffs_all_func are not equal');
+  
   % Precompute squared dot products
-  s = coeffs_all.^2; % k in [1,...,m0]
+  s = coeffs_all_func.^2; % k in [1,...,m0]
   if allSV
     s = s(:);
   else
@@ -40,17 +48,45 @@ function [Xgcv, Xopt, err_gcv, err_opt, k_gcv, k_opt] = gcv(U, S, V,x,b,m0,m,all
   end
 
   % Find k that minimizes the current sum
-  [~, idx] = min(current_sums);
-  k_gcv = k_values(idx);
+  [~, idx_min] = min(current_sums);
+  k_gcv = k_values(idx_min);
 
   % Compute cumulative coefficients
-  coeffs_all = coeffs_all ./ diag(S);
+  coeffs_all_func = coeffs_all_func ./ diag(S);
 
   % Compute cumulative solutions X for all k <= m0
-  X_cumsum = cumsum(V .* coeffs_all', 2);
+  %X_cumsum = cumsum(V .* coeffs_all', 2);
+
+  % Initialize result
+  X_cumsum_func = zeros(n*n, n*n);
+
+  % Get DCT matrix once
+  D = dctmtx(n)';
+  
+  % For each coefficient in sorted order
+  for k = 1:n*n
+      % Get pre-sorting position
+      [i, j] = ind2sub([n,n], idx(k));
+      
+      % Get basis vectors for original position
+      ui = D(:,j);
+      uj = D(:,i);
+      
+      % Create 2D basis vector via kronecker product
+      v = kron(ui, uj);
+      
+      % Multiply by sorted coefficient and store
+      X_cumsum_func(:,k) = v * coeffs_all_func(k);
+  end
+  
+  % Compute cumulative sum
+  X_cumsum_func = cumsum(X_cumsum_func, 2);
+
+  %assert(norm(X_cumsum(1:1000) - X_cumsum_func(1:1000)) < 1e-8,...
+  %      'Error: X_cumsum and X_cumsum_func are not equal');
   
   % Compute errors for each k
-  errs = vecnorm(X_cumsum - x, 2, 1);
+  errs = vecnorm(X_cumsum_func - x, 2, 1);
   
   % Find k that minimizes the error
   [~, k_opt] = min(errs);
@@ -59,14 +95,14 @@ function [Xgcv, Xopt, err_gcv, err_opt, k_gcv, k_opt] = gcv(U, S, V,x,b,m0,m,all
   if k_gcv == 0
     Xgcv = zeros(size(x));
   else
-    Xgcv = X_cumsum(:, k_gcv);
+    Xgcv = X_cumsum_func(:, k_gcv);
   end
 
   % Compute optimal Xopt
   if k_opt == 0
     Xopt = zeros(size(x));
   else
-    Xopt = X_cumsum(:, k_opt);
+    Xopt = X_cumsum_func(:, k_opt);
   end
 
   err_gcv = norm(Xgcv - x) / norm(x);
