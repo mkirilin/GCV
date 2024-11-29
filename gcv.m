@@ -77,32 +77,26 @@ function [Xgcv, Xopt, err_gcv, err_opt, k_gcv, k_opt] =...
       X_all(:,k) = kron(uk, vk);
   end
 
-  % Multiply by coefficients and compute cumulative sum
-  X_cumsum = cumsum(X_all .* coeffs', 2);
-
-  %assert(norm(X_cumsum(1:1000) - X_cumsum_func(1:1000)) < 1e-8,...
-  %      'Error: X_cumsum and X_cumsum_func are not equal');
+  % Instead of computing full cumsum, calculate errors progressively
+  errs = compute_chunked_errors(X_all, coeffs, x, n);
   
-  % Compute errors for each k
-  errs = vecnorm(X_cumsum - x, 2, 1);
-  
-  % Find k that minimizes the error
+  % Find optimal k
   [~, k_opt] = min(errs);
   
-  % Compute X using vectorized operations
+  % Compute only needed solutions
   if k_gcv == 0
-    Xgcv = zeros(size(x));
+      Xgcv = zeros(size(x));
   else
-    Xgcv = X_cumsum(:, k_gcv);
+      Xgcv = X_all(:,1:k_gcv) * coeffs(1:k_gcv);
   end
-
-  % Compute optimal Xopt
+  
   if k_opt == 0
-    Xopt = zeros(size(x));
+      Xopt = zeros(size(x));
   else
-    Xopt = X_cumsum(:, k_opt);
+      Xopt = X_all(:,1:k_opt) * coeffs(1:k_opt);
   end
-
+  
+  % Compute errors
   err_gcv = norm(Xgcv - x) / norm(x);
   err_opt = norm(Xopt - x) / norm(x);
 
@@ -111,106 +105,33 @@ function [Xgcv, Xopt, err_gcv, err_opt, k_gcv, k_opt] =...
   fprintf('Optimal error: %f on k = %d\n\n', err_opt, k_opt);
 end
 
-function [V] = compute_V(n, idx)
-  % Compute V for computing results by the formula:
-  % X = cumsum(V .* coeffs', 2);
-
-  % Get DCT matrix once
-  D = dctmtx(n)';
-
-  % Pre-compute all basis vectors efficiently
-  [I, J] = ind2sub([n,n], idx);
-  U = D(:,J);  % n x n^2
-  V = D(:,I);  % n x n^2
-
-  % Pre-allocate arrays for sparse matrix construction
-  nz_per_col = n;  % Each column will have n non-zero elements
-  total_nz = n^2 * nz_per_col;
-  
-  % Create index arrays for sparse matrix
-  rows = zeros(total_nz, 1);
-  cols = zeros(total_nz, 1);
-  vals = zeros(total_nz, 1);
-  
-  % Fill index arrays efficiently
-  idx = 1;
-  for k = 1:n^2
-    uk = U(:,k);
-    vk = V(:,k);
-    
-    % Compute outer product indices
-    [r, c] = ndgrid(1:n, k);
-    curr_vals = uk .* vk;
-    
-    % Store in arrays
-    num_elements = numel(r);
-    rows(idx:idx+num_elements-1) = r(:);
-    cols(idx:idx+num_elements-1) = c(:);
-    vals(idx:idx+num_elements-1) = curr_vals(:);
-    
-    idx = idx + num_elements;
-  end
-  
-  % Construct sparse matrix directly
-  V = sparse(rows, cols, vals, n^2, n^2);
-end
-
-function [k_opt, err_gcv, err_opt, Xgcv, Xopt] =...
-  compute_errors(V, coeffs, x, k_gcv, n)
-
-  % Compute cumulative solutions X for all k <= m0 by the formula:
-  % X = cumsum(V .* coeffs', 2);
-
-  % Instead of computing full cumsum, calculate errors progressively
-  errs = zeros(1, n^2);
-  running_sum = sparse(n^2, 1);
-
-  % Progressive reconstruction and error calculation
-  for k = 1:n^2
-    running_sum = running_sum + V(:,k) * coeffs(k);
-    errs(k) = norm(running_sum - x);
-  end
-
-  % Find optimal k
-  [~, k_opt] = min(errs);
-
-  % Compute only needed solutions
-  if k_gcv == 0
-    Xgcv = zeros(size(x));
-  else
-    Xgcv = V(:,1:k_gcv) * coeffs(1:k_gcv);
-  end
-
-  if k_opt == 0
-    Xopt = zeros(size(x));
-  else
-    Xopt = V(:,1:k_opt) * coeffs(1:k_opt);
-  end
-
-  % Compute errors
-  err_gcv = norm(Xgcv - x) / norm(x);
-  err_opt = norm(Xopt - x) / norm(x);
-end
-
 function errs = compute_chunked_errors(V, coeffs, x, n)
-  % Initialize
-  chunk_size = min(1000, n^2);  % Adjust chunk size based on available memory
-  num_chunks = ceil(n^2/chunk_size);
+  % Initialize with optimal chunk size
+  chunk_size = 10;
   errs = zeros(1, n^2);
   running_sum = sparse(n^2, 1);
+  x_norm = norm(x);
   
-  % Process chunks
-  for i = 1:num_chunks
-      % Calculate chunk indices
-      start_idx = (i-1)*chunk_size + 1;
-      end_idx = min(i*chunk_size, n^2);
-      chunk_range = start_idx:end_idx;
+  % Pre-compute chunk boundaries
+  chunk_starts = 1:chunk_size:n^2;
+  chunk_ends = min(chunk_starts + chunk_size - 1, n^2);
+  
+  % Process each chunk more efficiently
+  for i = 1:length(chunk_starts)
+    idx_range = chunk_starts(i):chunk_ends(i);
+    
+    % Pre-compute V*coeffs for chunk
+    chunk_V = V(:,idx_range);
+    chunk_coeffs = coeffs(idx_range);
+    
+    % Process coefficients progressively but more efficiently
+    for j = 1:length(idx_range)
+      k = idx_range(j);
+      running_sum = running_sum + chunk_V(:,j) * chunk_coeffs(j);
       
-      % Compute chunk sum efficiently
-      chunk_sum = V(:,chunk_range) * coeffs(chunk_range);
-      running_sum = running_sum + chunk_sum;
-      
-      % Compute errors for chunk
-      errs(chunk_range) = sqrt(sum((running_sum - x).^2));
+      % More efficient norm computation using dot product
+      diff = running_sum - x;
+      errs(k) = sqrt(dot(diff,diff)) / x_norm;
+    end
   end
 end
