@@ -20,7 +20,7 @@ numTests = 10;
 SNR = 10.^(-2:4)';
 
 model = 'blurGauss';  % Choose between 'blur', 'blurGauss' and 'CT'
-n_values = [128];  % List of n values to iterate over
+n_values = [256];  % List of n values to iterate over
 
 resultsDir = fullfile(fileparts(mfilename('fullpath')), 'Results');
 if ~exist(resultsDir, 'dir')
@@ -50,7 +50,7 @@ for n = n_values
     %U = U(:, idx);
     %V = V(:, idx);
 
-    S = diag(S);  % s should be of length 4096
+    %S = diag(S);  % s should be of length 4096
 
     %A_rec = U * S * V';  % Size: 4096 x 4096
 
@@ -64,7 +64,7 @@ for n = n_values
 
   % Plot singular values decay of A
   figure(5); clf;
-  semilogy(diag(S), 'linewidth', LW);
+  semilogy(S, 'linewidth', LW);
   title('Singular values decay of A', 'interpreter', 'latex', 'fontsize', 18);
 
   NoiseLevel = (norm(b) / sqrt(size(b,1))) ./ SNR;
@@ -73,7 +73,7 @@ for n = n_values
                    'VariableNames', {'SNR', 'Error', 'Method'});
   kData = table('Size', [0, 3], 'VariableTypes', {'double', 'double', 'string'},...
                 'VariableNames', {'SNR', 'k', 'Method'});
-
+tic
   for i = 1:size(SNR,1)
     for j = 1:numTests
       fprintf('Test %d, SNR = %f\n', j, SNR(i));
@@ -81,7 +81,7 @@ for n = n_values
 
       [bn, NoiseInfo] = PRnoise(b, 'gauss', NoiseLevel(i));
       [X_gcv, X_opt, error_gcv, error_opt, k_gcv, k_opt] =...
-        gcv(S(1:m0, 1:m0), x, bn, m0, m, false, idx, n);
+        gcv(S(1:m0), x, bn, m0, m, false, idx, n);
       testData = [testData; table(i, error_gcv, "gcv",...
                                   'VariableNames', {'SNR', 'Error', 'Method'})];
       testData = [testData; table(i, error_opt, "opt",...
@@ -92,6 +92,9 @@ for n = n_values
                             'VariableNames', {'SNR', 'k', 'Method'})];
     end
   end
+toc
+fprintf('Elapsed time: %f\n', toc);
+
   % Plot results
   plotErrorResults(testData, n, m0, m, SNR);
   plotKResults(kData, n, m0, m, SNR);
