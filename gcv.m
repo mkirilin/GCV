@@ -7,9 +7,7 @@ function [Xgcv, Xopt, err_gcv, err_opt, k_gcv, k_opt] =...
   coeffs = dct2(b_image);
   coeffs = coeffs(:);
   coeffs = coeffs(idx);
-  %assert(norm(coeffs_all - coeffs_all_func) < 1e-8,...
-  %      'Error: coeffs_all and coeffs_all_func are not equal');
-  
+
   % Precompute squared dot products
   s = coeffs.^2; % k in [1,...,m0]
   if allSV
@@ -17,9 +15,6 @@ function [Xgcv, Xopt, err_gcv, err_opt, k_gcv, k_opt] =...
   else
     s = [0; s]; % Add 0 to the beginning, size of s is m0+1
   end
-  %if m0 == m
-  %  s = s(1:end-1); % Remove last element
-  %end
 
   % Compute cumulative sums
   if allSV

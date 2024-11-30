@@ -1,10 +1,11 @@
 % TODO: 1. find optimal SNRs
 %         (a) find optimal SNR for blurGauss
-%           (i) 128
-%           (ii) 256
+%           (i)   128 -- (-2:2)
+%           (ii)  256 -- (-2:2)
+%           (iii) 512 -- (-2:2)
 %         (b) find optimal SNR for CT
-%           (i) 128
-%           (ii) 256
+%           (i)   128
+%           (ii)  256
 %**************************************
 % Clear workspace and window
 clear; clc;
@@ -41,22 +42,8 @@ for n = n_values
   if strcmp(model, 'blurGauss')
     [~, S, ~] = svds(A, b, m_sv);
 
-    %D_inv = dctmtx(n)';
-    %U = kron(D_inv, D_inv);  % Size: 4096 x 4096
-    %V = U;
-
     % Sort singular values in descending order and change U and V accordingly
     [S, idx] = sort(S, 'descend');
-    %U = U(:, idx);
-    %V = V(:, idx);
-
-    %S = diag(S);  % s should be of length 4096
-
-    %A_rec = U * S * V';  % Size: 4096 x 4096
-
-    %difference = norm(full(A) - A_rec);
-    %assert(difference < 1e-8,...
-    %      'Difference between A and A_rec is too large');
 
   else
     [U,S,V] = svds(A, m_sv);
@@ -100,7 +87,7 @@ fprintf('Elapsed time: %f\n', toc);
   plotKResults(kData, n, m0, m, SNR);
 
   % Display the reconstructions
-  displayReconstructions(x, b, X_gcv, X_opt, ProbInfo);
+  displayReconstructions(x, bn, X_gcv, X_opt, ProbInfo);
 
   % Save figures if needed
   saveFigures(dispres, n, resultsDir, model);
