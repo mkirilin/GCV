@@ -21,7 +21,7 @@ numTests = 10;
 SNR = 10.^(-2:4)';
 
 model = 'blurGauss';  % Choose between 'blur', 'blurGauss' and 'CT'
-n_values = [256];  % List of n values to iterate over
+n_values = [64];  % List of n values to iterate over
 
 resultsDir = fullfile(fileparts(mfilename('fullpath')), 'Results');
 if ~exist(resultsDir, 'dir')
@@ -67,8 +67,13 @@ tic
       rng(j);  % Set seed for reproducibility
 
       [bn, NoiseInfo] = PRnoise(b, 'gauss', NoiseLevel(i));
-      [X_gcv, X_opt, error_gcv, error_opt, k_gcv, k_opt] =...
-        gcv(S(1:m0), x, bn, m0, m, false, idx, n);
+      if strcmp(model, 'blurGauss')
+        [X_gcv, X_opt, error_gcv, error_opt, k_gcv, k_opt] =...
+          gcvBlurGauss(S(1:m0), x, bn, m0, m, false, idx, n);
+      else
+        [X_gcv, X_opt, error_gcv, error_opt, k_gcv, k_opt] =...
+          gcv(S(1:m0), x, bn, m0, m, false);
+      end
       testData = [testData; table(i, error_gcv, "gcv",...
                                   'VariableNames', {'SNR', 'Error', 'Method'})];
       testData = [testData; table(i, error_opt, "opt",...
