@@ -18,7 +18,7 @@ LW = 2;  % Plot line width
 MS = 10; % Size of markers on plots
 
 numTests = 10;
-SNR = 10.^(-2:4)';
+SNR = 10.^(-2:2)';
 
 model = 'blurGauss';  % Choose between 'blur', 'blurGauss' and 'CT'
 n_values = [64];  % List of n values to iterate over
@@ -29,6 +29,7 @@ if ~exist(resultsDir, 'dir')
 end
 
 for n = n_values
+tic
   % Define the test problem
   [A, b, x, ProbInfo, m0] = defineTestProblem(model, n);
 
@@ -47,6 +48,7 @@ for n = n_values
 
   else
     [U,S,V] = svds(A, m_sv);
+    S = diag(S);
   end
 
   % Plot singular values decay of A
@@ -60,7 +62,7 @@ for n = n_values
                    'VariableNames', {'SNR', 'Error', 'Method'});
   kData = table('Size', [0, 3], 'VariableTypes', {'double', 'double', 'string'},...
                 'VariableNames', {'SNR', 'k', 'Method'});
-tic
+
   for i = 1:size(SNR,1)
     for j = 1:numTests
       fprintf('Test %d, SNR = %f\n', j, SNR(i));
@@ -72,7 +74,7 @@ tic
           gcvBlurGauss(S(1:m0), x, bn, m0, m, false, idx, n);
       else
         [X_gcv, X_opt, error_gcv, error_opt, k_gcv, k_opt] =...
-          gcv(S(1:m0), x, bn, m0, m, false);
+          gcv(U(:,1:m0), S(1:m0), V(:,1:m0), x, bn, m0, m, false);
       end
       testData = [testData; table(i, error_gcv, "gcv",...
                                   'VariableNames', {'SNR', 'Error', 'Method'})];
@@ -84,8 +86,8 @@ tic
                             'VariableNames', {'SNR', 'k', 'Method'})];
     end
   end
-toc
-fprintf('Elapsed time: %f\n', toc);
+  toc
+  fprintf('Elapsed time: %f\n', toc);
 
   % Plot results
   plotErrorResults(testData, n, m0, m, SNR);
@@ -105,7 +107,6 @@ function [A, b, x, ProbInfo, m0] = defineTestProblem(model, n)
     [A, b, x, ProbInfo] = PRblurrotation(n);
   elseif strcmp(model, 'CT')
     options = IRset();
-    options.sm = true;
     options.CommitCrime = 'on';
     m0 = n*n;
     [A, b, x, ProbInfo] = PRtomo(n, options);
@@ -114,7 +115,7 @@ function [A, b, x, ProbInfo, m0] = defineTestProblem(model, n)
     %options.BlurLevel = 'severe';
     %options.BC = 'zero';
     %options.trueImage = 'satellite';
-    options.CommitCrime = 'on';
+    %options.CommitCrime = 'on';
     m0 = n*n;
     [A, b, x, ProbInfo] = PRblurgauss(n, options);
   else
