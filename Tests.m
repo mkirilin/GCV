@@ -4,8 +4,8 @@
 %           (ii)  256 -- (-2:2)
 %           (iii) 512 -- (-2:2)
 %         (b) find optimal SNR for CT
-%           (i)   128
-%           (ii)  256
+%           (i)   128 -- (-2:2)
+%           (ii)  256 -- (-2:2)
 %**************************************
 % Clear workspace and window
 clear; clc;
@@ -33,12 +33,13 @@ tic
   % Define the test problem
   [A, b, x, ProbInfo, m0] = defineTestProblem(model, n);
 
-  m = size(A,1);
-  % Find all non-zero singular vectors of sparce matrix A
-  m_sv = min(size(A));
+  m = min(size(A)); % Maximum possible rank of A
+  m_sv = sprank(A); % Structural rank of A (>= rank(A))
+  fprintf("structural rank of A: %d\n", sprank(A));
+  %fprintf("rank of A: %d\n", rank(full(A)));
   fprintf('dims of A: %d x %d\n', size(A,1), size(A,2));
-  assert(m0 <= m_sv, 'm0 must be less than or equal to the number of rows of A');
-  fprintf('m = %d, m0 = %d\n', m, m0);
+  %assert(m0 <= m_sv, 'm0 must be less than or equal to the number of rows of A');
+  %assert (sprank(A) == m_sv, 'A must have full rank');
 
   if strcmp(model, 'blurGauss')
     [~, S, ~] = svds(A, b, m_sv);
@@ -74,7 +75,7 @@ tic
           gcvBlurGauss(S(1:m0), x, bn, m0, m, false, idx, n);
       else
         [X_gcv, X_opt, error_gcv, error_opt, k_gcv, k_opt] =...
-          gcv(U(:,1:m0), S(1:m0), V(:,1:m0), x, bn, m0, m, false);
+          gcv(U(:,1:m_sv), S(1:m_sv), V(:,1:m_sv), x, bn, m_sv, m, false);
       end
       testData = [testData; table(i, error_gcv, "gcv",...
                                   'VariableNames', {'SNR', 'Error', 'Method'})];
@@ -195,4 +196,5 @@ end
 % Helper function to save a figure
 function saveFigure(filename, figNumber)
   exportgraphics(figure(figNumber), filename);
+  savefig(figure(figNumber), [filename(1:end-3), 'fig']);
 end
