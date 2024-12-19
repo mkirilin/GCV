@@ -88,7 +88,6 @@ tic
     end
   end
   toc
-  fprintf('Elapsed time: %f\n', toc);
 
   % Plot results
   plotErrorResults(testData, n, m0, m, SNR);
