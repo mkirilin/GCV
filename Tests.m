@@ -34,10 +34,11 @@ tic
   [A, b, x, ProbInfo, m0] = defineTestProblem(model, n);
 
   m = min(size(A)); % Maximum possible rank of A
-  m_sv = sprank(A); % Structural rank of A (>= rank(A))
-  fprintf("structural rank of A: %d\n", sprank(A));
-  %fprintf("rank of A: %d\n", rank(full(A)));
-  fprintf('dims of A: %d x %d\n', size(A,1), size(A,2));
+  if strcmp(model, 'CT')
+    m_sv = sprank(A); % Structural rank of A (>= rank(A))
+  else
+    m_sv = m;
+  end
   %assert(m0 <= m_sv, 'm0 must be less than or equal to the number of rows of A');
   %assert (sprank(A) == m_sv, 'A must have full rank');
 
