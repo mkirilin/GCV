@@ -78,9 +78,10 @@ function [Xgcv, Xopt, err_gcv, err_opt, k_gcv, k_opt] =...
   err_gcv = norm(Xgcv - x) / norm(x);
   err_opt = norm(Xopt - x) / norm(x);
 
+  % Deprecated. Uncomment if needed.
   % Print results
-  fprintf('GCV error: %f on k = %d\n', err_gcv, k_gcv);
-  fprintf('Optimal error: %f on k = %d\n\n', err_opt, k_opt);
+  % fprintf('GCV error: %f on k = %d\n', err_gcv, k_gcv);
+  % fprintf('Optimal error: %f on k = %d\n\n', err_opt, k_opt);
 end
 
 function errs = compute_chunked_errors(U, V, coeffs, x, n, chunk_size)

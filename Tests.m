@@ -65,9 +65,11 @@ tic
   kData = table('Size', [0, 3], 'VariableTypes', {'double', 'double', 'string'},...
                 'VariableNames', {'SNR', 'k', 'Method'});
 
+  totalRuns = size(SNR,1) * numTests;
   for i = 1:size(SNR,1)
     for j = 1:numTests
-      fprintf('Test %d, SNR = %f\n', j, SNR(i));
+      currentPercent = ((i-1)*numTests + j) / totalRuns * 100.;
+      fprintf('Done %3.3f %%: Test %d, SNR = %f\n', currentPercent, j, SNR(i));
       rng(j);  % Set seed for reproducibility
 
       [bn, NoiseInfo] = PRnoise(b, 'gauss', NoiseLevel(i));
