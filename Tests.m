@@ -63,8 +63,12 @@ toc
   totalRuns = size(SNR,1) * numTests;
   for i = 1:size(SNR,1)
     for j = 1:numTests
-      currentPercent = ((i-1)*numTests + j) / totalRuns * 100.;
-      fprintf('Done %3.3f %%: Test %d, SNR = %f\n', currentPercent, j, SNR(i));
+      currentRun = (i-1)*numTests + j;
+      currentPercent = currentRun / totalRuns * 100.;
+      % Print only 200 lines
+      if mod(currentRun, totalRuns / 200) == 0
+        fprintf('Done %3.3f %%: Test %d, SNR = %f\n', currentPercent, j, SNR(i));
+      end
       rng(j);  % Set seed for reproducibility
 
       [bn, NoiseInfo] = PRnoise(b, 'gauss', NoiseLevel(i));
