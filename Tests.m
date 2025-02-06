@@ -10,12 +10,7 @@
 % Clear workspace and window
 clear; clc;
 
-% Choose if you would like to see the results displayed in a single figure 
-% window ('subplots') or in multiple figure windows ('manyplots')
-dispres = 'manyplots';
-
 LW = 2;  % Plot line width
-MS = 10; % Size of markers on plots
 
 numTests = 10;
 SNR = 10.^(-2:2)';
@@ -64,7 +59,7 @@ tic
                    'VariableNames', {'SNR', 'Error', 'Method'});
   kData = table('Size', [0, 3], 'VariableTypes', {'double', 'double', 'string'},...
                 'VariableNames', {'SNR', 'k', 'Method'});
-
+toc
   totalRuns = size(SNR,1) * numTests;
   for i = 1:size(SNR,1)
     for j = 1:numTests
@@ -100,7 +95,7 @@ tic
   displayReconstructions(x, bn, X_gcv, X_opt, ProbInfo);
 
   % Save figures if needed
-  saveFigures(dispres, n, resultsDir, model);
+  saveFigures(n, resultsDir, model);
 end
 
 % Function to define the test problem
@@ -181,18 +176,14 @@ function displayReconstructions(x, b, X_gcv, X_opt, ProbInfo)
 end
 
 % Function to save figures
-function saveFigures(dispres, n, resultsDir, model)
-  if strcmp(dispres, 'subplots')
-    saveFigure(fullfile(resultsDir, ['AllPlots_n', num2str(n), model, '.png']), 1);
-  elseif strcmp(dispres, 'manyplots')
-    saveFigure(fullfile(resultsDir, ['Orig_n', num2str(n), model, '.eps']), 1);
-    saveFigure(fullfile(resultsDir, ['Signal_n', num2str(n), model, '.eps']), 2);
-    saveFigure(fullfile(resultsDir, ['GCV_n', num2str(n), model, '.eps']), 3);
-    saveFigure(fullfile(resultsDir, ['Opt_n', num2str(n), model, '.eps']), 4);
-    saveFigure(fullfile(resultsDir, ['SVdecay_n', num2str(n), model, '.pdf']), 5);
-    saveFigure(fullfile(resultsDir, ['Errors_n', num2str(n), model, '.pdf']), 10);
-    saveFigure(fullfile(resultsDir, ['ks_n', num2str(n), model, '.pdf']), 11);
-  end
+function saveFigures(n, resultsDir, model)
+  saveFigure(fullfile(resultsDir, ['Orig_n', num2str(n), model, '.eps']), 1);
+  saveFigure(fullfile(resultsDir, ['Signal_n', num2str(n), model, '.eps']), 2);
+  saveFigure(fullfile(resultsDir, ['GCV_n', num2str(n), model, '.eps']), 3);
+  saveFigure(fullfile(resultsDir, ['Opt_n', num2str(n), model, '.eps']), 4);
+  saveFigure(fullfile(resultsDir, ['SVdecay_n', num2str(n), model, '.pdf']), 5);
+  saveFigure(fullfile(resultsDir, ['Errors_n', num2str(n), model, '.pdf']), 10);
+  saveFigure(fullfile(resultsDir, ['ks_n', num2str(n), model, '.pdf']), 11);
 end
 
 % Helper function to save a figure
