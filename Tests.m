@@ -15,7 +15,7 @@ LW = 2;  % Plot line width
 numTests = 10;
 SNR = 10.^(-2:2)';
 
-model = 'blurGauss';  % Choose between 'blur', 'blurGauss' and 'CT'
+model = 'CT';  % Choose between 'blur', 'blurGauss' and 'CT'
 n_values = [64];  % List of n values to iterate over
 
 resultsDir = fullfile(fileparts(mfilename('fullpath')), 'Results');
@@ -46,12 +46,8 @@ tic
   else
     [U,S,V] = svds(A, m_sv);
     S = diag(S);
+    Ub = U' * b;
   end
-
-  % Plot singular values decay of A
-  figure(5); clf;
-  semilogy(S, 'linewidth', LW);
-  title('Singular values decay of A', 'interpreter', 'latex', 'fontsize', 18);
 
   NoiseLevel = (norm(b) / sqrt(size(b,1))) ./ SNR;
   % Preallocate table for test data
@@ -71,13 +67,16 @@ toc
       end
       rng(j);  % Set seed for reproducibility
 
-      [bn, NoiseInfo] = PRnoise(b, 'gauss', NoiseLevel(i));
+      [n1,n2] = size(b);
+      bn = b + NoiseLevel(i) * randn(n1*n2,1);
       if strcmp(model, 'blurGauss')
         [X_gcv, X_opt, error_gcv, error_opt, k_gcv, k_opt] =...
-          gcvBlurGauss(S(1:m0), x, bn, m0, m, false, idx, n);
-      else
+          gcvBlurGauss(S(1:m0), x, bn, m0, m, true, idx, n);
+        else
+        [n1,n2] = size(Ub);
+        coeffs_all = Ub + NoiseLevel(i) * randn(n1*n2,1);
         [X_gcv, X_opt, error_gcv, error_opt, k_gcv, k_opt] =...
-          gcv(U(:,1:m_sv), S(1:m_sv), V(:,1:m_sv), x, bn, m_sv, m, false);
+          gcv(S(1:m_sv), V(:,1:m_sv), x, bn, m_sv, m, true, coeffs_all);
       end
       testData = [testData; table(i, error_gcv, "gcv",...
                                   'VariableNames', {'SNR', 'Error', 'Method'})];
@@ -96,7 +95,7 @@ toc
   plotKResults(kData, n, m0, m, SNR);
 
   % Display the reconstructions
-  displayReconstructions(x, bn, X_gcv, X_opt, ProbInfo);
+  %displayReconstructions(x, bn, X_gcv, X_opt, ProbInfo);
 
   % Save figures if needed
   saveFigures(n, resultsDir, model);
@@ -114,10 +113,6 @@ function [A, b, x, ProbInfo, m0] = defineTestProblem(model, n)
     [A, b, x, ProbInfo] = PRtomo(n, options);
   elseif strcmp(model, 'blurGauss')
     options = IRset();
-    %options.BlurLevel = 'severe';
-    %options.BC = 'zero';
-    %options.trueImage = 'satellite';
-    %options.CommitCrime = 'on';
     m0 = n*n;
     [A, b, x, ProbInfo] = PRblurgauss(n, options);
   else
@@ -181,11 +176,11 @@ end
 
 % Function to save figures
 function saveFigures(n, resultsDir, model)
-  saveFigure(fullfile(resultsDir, ['Orig_n', num2str(n), model, '.eps']), 1);
-  saveFigure(fullfile(resultsDir, ['Signal_n', num2str(n), model, '.eps']), 2);
-  saveFigure(fullfile(resultsDir, ['GCV_n', num2str(n), model, '.eps']), 3);
-  saveFigure(fullfile(resultsDir, ['Opt_n', num2str(n), model, '.eps']), 4);
-  saveFigure(fullfile(resultsDir, ['SVdecay_n', num2str(n), model, '.pdf']), 5);
+  %saveFigure(fullfile(resultsDir, ['Orig_n', num2str(n), model, '.eps']), 1);
+  %saveFigure(fullfile(resultsDir, ['Signal_n', num2str(n), model, '.eps']), 2);
+  %saveFigure(fullfile(resultsDir, ['GCV_n', num2str(n), model, '.eps']), 3);
+  %saveFigure(fullfile(resultsDir, ['Opt_n', num2str(n), model, '.eps']), 4);
+  %saveFigure(fullfile(resultsDir, ['SVdecay_n', num2str(n), model, '.pdf']), 5);
   saveFigure(fullfile(resultsDir, ['Errors_n', num2str(n), model, '.pdf']), 10);
   saveFigure(fullfile(resultsDir, ['ks_n', num2str(n), model, '.pdf']), 11);
 end

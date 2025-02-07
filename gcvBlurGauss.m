@@ -1,10 +1,8 @@
 function [Xgcv, Xopt, err_gcv, err_opt, k_gcv, k_opt] =...
-  gcvBlurGauss(S, x, b, m0, m, allSV, idx, n)
+  gcvBlurGauss(S, x, bn, m0, m, allSV, idx, n)
 
-  %coeffs_all = U' * b;
-
-  b_image = reshape(b, [n, n]);
-  coeffs = dct2(b_image);
+  bn_image = reshape(bn, [n, n]);
+  coeffs = dct2(bn_image);
   coeffs = coeffs(:);
   coeffs = coeffs(idx);
 
@@ -23,24 +21,22 @@ function [Xgcv, Xopt, err_gcv, err_opt, k_gcv, k_opt] =...
     cs = cumsum(s);
   end
 
-  % Compute norm of b
-  b_norm = norm(b)^2;
-
+  
   % Define k range
   if m0 == m
     k_values = (0:m0-1);
   else
     k_values = (0:m0);
   end
-
+  
   % Compute denominators for all k
   denom = (1 - (k_values) / m).^2;
-
+  
   % Compute current sums for all k
   if allSV
     current_sums = cs(k_values + 1)' ./ denom;
   else
-    current_sums = (b_norm - cs(k_values + 1)') ./ denom;
+    current_sums = (norm(bn)^2 - cs(k_values + 1)') ./ denom;
   end
 
   % Find k that minimizes the current sum
