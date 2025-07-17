@@ -5,7 +5,6 @@
 #SBATCH --time=24:00:00
 #SBATCH --mem=400GB
 #SBATCH --mail-type=begin,end
-#SBATCH --mail-user=kirilin@math.tu-berlin.de
 #SBATCH --cpus-per-task=32
 #SBATCH --nodes=1
 #SBATCH --tasks=1
