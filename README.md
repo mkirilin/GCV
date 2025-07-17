@@ -30,8 +30,8 @@ techniques.
 ## Dependencies
 
 This code requires the following MATLAB toolboxes and external libraries:
-- **AIRToolsII** - Algebraic Iterative Reconstruction Methods
-- **IRtools** - Image Restoration Tools
+- **AIRToolsII** - [Algebraic Iterative Reconstruction Methods](https://github.com/jakobsj/AIRToolsII)
+- **IRtools** - [Image Restoration Tools](https://github.com/jnagy1/IRtools)
 
 ## Installation and Setup
 
