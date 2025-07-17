@@ -107,12 +107,13 @@ This project is currently without a specified license. Please contact the reposi
 
 ## Contact
 
-- **Author**: Tim Jahn
-- **Email**: jahn@math.tu-berlin.de
-
-- **Author**: Mikhail Kirilin
-- **Repository**: [mkirilin/GCV](https://github.com/mkirilin/GCV)
-- **Email**: kirilin@math.tu-berlin.de
+ - **Repository**: [mkirilin/GCV](https://github.com/mkirilin/GCV)
+#
+ - **Author**: Tim Jahn
+ - **Email**: jahn@math.tu-berlin.de
+#
+ - **Author**: Mikhail Kirilin
+ - **Email**: kirilin@math.tu-berlin.de
 
 ---
 
