@@ -103,7 +103,7 @@ Contributions are welcome! Please feel free to submit issues, feature requests, 
 
 ## License
 
-This project is currently without a specified license. Please contact the repository owner for usage permissions.
+This project is currently with BSD 3-Clause License.
 
 ## Contact
 
