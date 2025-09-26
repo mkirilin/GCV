@@ -31,7 +31,7 @@ function [Xgcv, Xopt, err_gcv, err_opt, k_gcv, k_opt] =...
   
   % Compute denominators for all k
   denom = (1 - (k_values) / m).^2;
-  
+
   % Compute current sums for all k
   if allSV
     current_sums = cs(k_values + 1)' ./ denom;

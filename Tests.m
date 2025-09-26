@@ -72,16 +72,27 @@ toc
       if strcmp(model, 'blurGauss')
         [X_gcv, X_opt, error_gcv, error_opt, k_gcv, k_opt] =...
           gcvBlurGauss(S(1:m0), x, bn, m0, m, true, idx, n);
-        else
+        [X_hdp, error_hdp, k_hdp] =...
+          hdpBlurGauss(S(1:m0), x, bn, m0, m, true, idx, n);
+      else
         [n1,n2] = size(Ub);
         coeffs_all = Ub + NoiseLevel(i) * randn(n1*n2,1);
         [X_gcv, X_opt, error_gcv, error_opt, k_gcv, k_opt] =...
           gcv(S(1:m_sv), V(:,1:m_sv), x, bn, m_sv, m, true, coeffs_all);
+        [X_hdp, error_hdp, k_hdp] =...
+          hdp(S(1:m_sv), V(:,1:m_sv), x, bn, m_sv-1, m, true, coeffs_all);
       end
+      testData = [testData; table(i, error_hdp, "hdp",...
+                                  'VariableNames', {'SNR', 'Error', 'Method'})];
       testData = [testData; table(i, error_gcv, "gcv",...
                                   'VariableNames', {'SNR', 'Error', 'Method'})];
       testData = [testData; table(i, error_opt, "opt",...
                                   'VariableNames', {'SNR', 'Error', 'Method'})];
+      fprintf('  HDP error: %f on k = %d\n', error_hdp, k_hdp);
+      fprintf('  GCV error: %f on k = %d\n', error_gcv, k_gcv);
+      fprintf('  Optimal error: %f on k = %d\n\n', error_opt, k_opt);
+      kData = [kData; table(i, k_hdp, "hdp",...
+                            'VariableNames', {'SNR', 'k', 'Method'})];
       kData = [kData; table(i, k_gcv, "gcv",...
                             'VariableNames', {'SNR', 'k', 'Method'})];
       kData = [kData; table(i, k_opt, "opt",...
@@ -125,8 +136,11 @@ function plotErrorResults(testData, n, m0, m, SNR)
   figure(10); clf;
   title(['Results for n = ', num2str(n), ', ', num2str(m0), '/', num2str(m),...
         ' singular values'], 'interpreter', 'latex', 'fontsize', 18);
+  % Enforce method order
+  methodOrder = {'hdp','gcv','opt'};
+  testData.Method = categorical(cellstr(testData.Method), methodOrder, methodOrder, 'Ordinal', true);
   boxchart(testData.SNR, testData.Error, 'GroupByColor', testData.Method);
-  
+
   xlabel('SNR');
   xtick=SNR;
   xticklab = cellstr(num2str(round(log10(xtick(:))), '10^{%d}'));

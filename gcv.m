@@ -2,7 +2,7 @@ function [Xgcv, Xopt, err_gcv, err_opt, k_gcv, k_opt] = ...
   gcv(S, V, x, bn, m0, m, allSV, coeffs_all)
 
   s = coeffs_all.^2;
-  coeffs_scaled = coeffs_all ./ S;
+  coeffs_scaled = coeffs_all ./ S(1:m0);
 
   x_norm = norm(x);
   k_values = (0:m0);
@@ -14,7 +14,7 @@ function [Xgcv, Xopt, err_gcv, err_opt, k_gcv, k_opt] = ...
   else
     current_sums = compute_current_sums(s, bn, k_values, denom);
   end
-  
+
   % Compute ALL ERRORS progressively
   errs = zeros(1, m0);
   running_sum = zeros(size(x));
