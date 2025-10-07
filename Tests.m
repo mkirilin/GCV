@@ -12,11 +12,11 @@ clear; clc;
 
 LW = 2;  % Plot line width
 
-numTests = 10;
+numTests = 2;
 SNR = 10.^(-2:2)';
 
-model = 'CT';  % Choose between 'blur', 'blurGauss' and 'CT'
-n_values = [64];  % List of n values to iterate over
+model = 'blurGauss';  % Choose between 'blur', 'blurGauss' and 'CT'
+n_values = [128];  % List of n values to iterate over
 
 resultsDir = fullfile(fileparts(mfilename('fullpath')), 'Results');
 if ~exist(resultsDir, 'dir')
@@ -135,36 +135,66 @@ end
 function plotErrorResults(testData, n, m0, m, SNR)
   figure(10); clf;
   title(['Results for n = ', num2str(n), ', ', num2str(m0), '/', num2str(m),...
-        ' singular values'], 'interpreter', 'latex', 'fontsize', 18);
-  % Enforce method order
-  methodOrder = {'hdp','gcv','opt'};
-  testData.Method = categorical(cellstr(testData.Method), methodOrder, methodOrder, 'Ordinal', true);
-  boxchart(testData.SNR, testData.Error, 'GroupByColor', testData.Method);
+        ' singular values'], 'interpreter','latex','fontsize',18);
 
-  xlabel('SNR');
-  xtick=SNR;
-  xticklab = cellstr(num2str(round(log10(xtick(:))), '10^{%d}'));
-  set(gca,'XTickLabel',xticklab,'TickLabelInterpreter','tex')
+  methodOrder = {'hdp','gcv','opt'};
+  testData.Method = categorical(testData.Method, methodOrder, 'Ordinal', true);
+
   ax = gca;
+  origCo = ax.ColorOrder;
+
+  h = boxchart(testData.SNR, testData.Error, 'GroupByColor', testData.Method);
+
+  % Desired remap (keep legend/order: hdp,gcv,opt)
+  % hdp -> old opt color (3)
+  % gcv -> old hdp color (1)
+  % opt -> old gcv color (2)
+  remap = [3 1 2];
+  for i = 1:numel(h)
+    c = origCo(remap(i),:);
+    h(i).BoxFaceColor = c;
+    h(i).BoxFaceColorMode = 'manual';
+    h(i).MarkerColor = c;
+    h(i).WhiskerLineColor = c;
+  end
+
+  xtick = SNR;
+  xticklab = cellstr(num2str(round(log10(xtick(:))), '10^{%d}'));
+  xlabel('SNR');
+  set(gca,'XTickLabel', xticklab, 'TickLabelInterpreter','tex');
   ylabel('Relative error');
-  ax.YAxis.Scale ="log";
-  legend()
+  set(gca,'YScale','log');
+  legend(methodOrder,'Location','best');
 end
 
 function plotKResults(kData, n, m0, m, SNR)
   figure(11); clf;
-  title(['Results for n = ', num2str(n), ', ', num2str(m0), '/', num2str(m), ' singular values'],...
-        'interpreter', 'latex', 'fontsize', 18);
-  boxchart(kData.SNR, kData.k, 'GroupByColor', kData.Method);
+  title(['Results for n = ', num2str(n), ', ', num2str(m0), '/', num2str(m),...
+        ' singular values'], 'interpreter','latex','fontsize',18);
 
-  xlabel('SNR');
-  xtick=SNR;
+  methodOrder = {'hdp','gcv','opt'};
+  kData.Method = categorical(kData.Method, methodOrder, 'Ordinal', true);
+
+  ax = gca;
+  origCo = ax.ColorOrder;
+
+  h = boxchart(kData.SNR, kData.k, 'GroupByColor', kData.Method);
+
+  remap = [3 1 2]; % same color remap
+  for i = 1:numel(h)
+    c = origCo(remap(i),:);
+    h(i).BoxFaceColor = c;
+    h(i).BoxFaceColorMode = 'manual';
+    h(i).MarkerColor = c;
+    h(i).WhiskerLineColor = c;
+  end
+
+  xtick = SNR;
   xticklab = cellstr(num2str(round(log10(xtick(:))), '10^{%d}'));
-  set(gca,'XTickLabel',xticklab,'TickLabelInterpreter','tex')
-  %ax = gca;
+  xlabel('SNR');
+  set(gca,'XTickLabel', xticklab, 'TickLabelInterpreter','tex');
   ylabel('k');
-  %ax.YAxis.Scale ="log";
-  legend()
+  legend(methodOrder,'Location','best');
 end
 
 % Function to display reconstructions
