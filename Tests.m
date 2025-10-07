@@ -134,67 +134,98 @@ end
 % Function to plot results
 function plotErrorResults(testData, n, m0, m, SNR)
   figure(10); clf;
-  title(['Results for n = ', num2str(n), ', ', num2str(m0), '/', num2str(m),...
-        ' singular values'], 'interpreter','latex','fontsize',18);
+  %title(['Results for n = ', num2str(n), ', ', num2str(m0), '/', num2str(m), ...
+  %      ' singular values'], 'interpreter','latex','fontsize',18);
 
   methodOrder = {'hdp','gcv','opt'};
   testData.Method = categorical(testData.Method, methodOrder, 'Ordinal', true);
 
+  % Parameters controlling spacing
+  gap = 3;                  % extra empty slots between SNR groups
+  numMethods = numel(methodOrder);
+  offsets = linspace(-(numMethods-1)/2, (numMethods-1)/2, numMethods); % relative offsets inside group
+  centers = (0:numel(SNR)-1) * (numMethods + gap); % central x positions for each SNR group
+
   ax = gca;
   origCo = ax.ColorOrder;
+  remap = [3 1 2]; % hdp->3, gcv->1, opt->2 (reassign colors)
 
-  h = boxchart(testData.SNR, testData.Error, 'GroupByColor', testData.Method);
-
-  % Desired remap (keep legend/order: hdp,gcv,opt)
-  % hdp -> old opt color (3)
-  % gcv -> old hdp color (1)
-  % opt -> old gcv color (2)
-  remap = [3 1 2];
-  for i = 1:numel(h)
-    c = origCo(remap(i),:);
-    h(i).BoxFaceColor = c;
-    h(i).BoxFaceColorMode = 'manual';
-    h(i).MarkerColor = c;
-    h(i).WhiskerLineColor = c;
+  hold on;
+  hBoxes = gobjects(numMethods,1);
+  for mIdx = 1:numMethods
+    methodName = methodOrder{mIdx};
+    mask = testData.Method == methodName;
+    snrIdx = testData.SNR(mask);       % these are indices 1..numel(SNR)
+    xPos = centers(snrIdx) + offsets(mIdx); % spaced + offset
+    hBoxes(mIdx) = boxchart(xPos, testData.Error(mask), 'BoxWidth', 0.6);
+    % Color remap
+    c = origCo(remap(mIdx), :);
+    hBoxes(mIdx).BoxFaceColor = c;
+    hBoxes(mIdx).BoxFaceColorMode = 'manual';
+    hBoxes(mIdx).MarkerColor = c;
+    hBoxes(mIdx).WhiskerLineColor = c;
   end
+  hold off;
 
-  xtick = SNR;
-  xticklab = cellstr(num2str(round(log10(xtick(:))), '10^{%d}'));
+  % X-axis ticks at group centers
+  xticks(centers);
+  xticklab = cellstr(num2str(round(log10(SNR(:))), '10^{%d}'));
+  xticklabels(xticklab);
+  set(gca,'TickLabelInterpreter','tex');
+
   xlabel('SNR');
-  set(gca,'XTickLabel', xticklab, 'TickLabelInterpreter','tex');
   ylabel('Relative error');
   set(gca,'YScale','log');
-  legend(methodOrder,'Location','best');
+
+  % Expand limits a bit for readability
+  xlim([centers(1) - (numMethods), centers(end) + (numMethods)]);
+
+  legend(hBoxes, methodOrder, 'Location','best');
 end
 
 function plotKResults(kData, n, m0, m, SNR)
   figure(11); clf;
-  title(['Results for n = ', num2str(n), ', ', num2str(m0), '/', num2str(m),...
-        ' singular values'], 'interpreter','latex','fontsize',18);
+  %title(['Results for n = ', num2str(n), ', ', num2str(m0), '/', num2str(m), ...
+  %      ' singular values'], 'interpreter','latex','fontsize',18);
 
   methodOrder = {'hdp','gcv','opt'};
   kData.Method = categorical(kData.Method, methodOrder, 'Ordinal', true);
 
+  gap = 3;
+  numMethods = numel(methodOrder);
+  offsets = linspace(-(numMethods-1)/2, (numMethods-1)/2, numMethods);
+  centers = (0:numel(SNR)-1) * (numMethods + gap);
+
   ax = gca;
   origCo = ax.ColorOrder;
+  remap = [3 1 2];
 
-  h = boxchart(kData.SNR, kData.k, 'GroupByColor', kData.Method);
-
-  remap = [3 1 2]; % same color remap
-  for i = 1:numel(h)
-    c = origCo(remap(i),:);
-    h(i).BoxFaceColor = c;
-    h(i).BoxFaceColorMode = 'manual';
-    h(i).MarkerColor = c;
-    h(i).WhiskerLineColor = c;
+  hold on;
+  hBoxes = gobjects(numMethods,1);
+  for mIdx = 1:numMethods
+    methodName = methodOrder{mIdx};
+    mask = kData.Method == methodName;
+    snrIdx = kData.SNR(mask);
+    xPos = centers(snrIdx) + offsets(mIdx);
+    hBoxes(mIdx) = boxchart(xPos, kData.k(mask), 'BoxWidth', 0.6);
+    c = origCo(remap(mIdx), :);
+    hBoxes(mIdx).BoxFaceColor = c;
+    hBoxes(mIdx).BoxFaceColorMode = 'manual';
+    hBoxes(mIdx).MarkerColor = c;
+    hBoxes(mIdx).WhiskerLineColor = c;
   end
+  hold off;
 
-  xtick = SNR;
-  xticklab = cellstr(num2str(round(log10(xtick(:))), '10^{%d}'));
+  xticks(centers);
+  xticklab = cellstr(num2str(round(log10(SNR(:))), '10^{%d}'));
+  xticklabels(xticklab);
+  set(gca,'TickLabelInterpreter','tex');
+
   xlabel('SNR');
-  set(gca,'XTickLabel', xticklab, 'TickLabelInterpreter','tex');
   ylabel('k');
-  legend(methodOrder,'Location','best');
+  xlim([centers(1) - (numMethods), centers(end) + (numMethods)]);
+
+  legend(hBoxes, methodOrder,'Location','best');
 end
 
 % Function to display reconstructions
