@@ -177,6 +177,14 @@ function plotErrorResults(testData, n, m0, m, SNR)
   ylabel('Relative error');
   set(gca,'YScale','log');
 
+    % Add vertical margin (extra space above x-axis and a bit at top)
+  yl = ylim;
+  if yl(1) > 0
+    ylim([yl(1)*0.8, yl(2)*1.05]); % expand down (more space above x-axis) and slightly up
+  else
+    ylim([max(yl(1), eps), yl(2)*1.05]);
+  end
+
   % Expand limits a bit for readability
   xlim([centers(1) - (numMethods), centers(end) + (numMethods)]);
 
@@ -223,6 +231,10 @@ function plotKResults(kData, n, m0, m, SNR)
 
   xlabel('SNR');
   ylabel('k');
+  % Add vertical margin for k plot
+  yl = ylim;
+  span = yl(2) - yl(1);
+  ylim([yl(1) - 0.05*span, yl(2) + 0.05*span]); % linear scale adjustment
   xlim([centers(1) - (numMethods), centers(end) + (numMethods)]);
 
   legend(hBoxes, methodOrder,'Location','best');
