@@ -70,17 +70,17 @@ toc
       [n1,n2] = size(b);
       bn = b + NoiseLevel(i) * randn(n1*n2,1);
       if strcmp(model, 'blurGauss')
-        [X_gcv, X_opt, error_gcv, error_opt, k_gcv, k_opt] =...
-          gcvBlurGauss(S(1:m0), x, bn, m0, m, true, idx, n);
-        [X_hdp, error_hdp, k_hdp] =...
-          hdpBlurGauss(S(1:m0), x, bn, m0, m, true, idx, n);
+        % Compute HDP over a range of m0 candidates and select result with maximum k_hdp
+        [k_hdp, m0_hdp_source] = hdpAcrossM0BlurGauss(S, bn, m0, idx, n);
+        [X_gcv, X_opt, error_gcv, error_opt, error_hdp, k_gcv, k_opt] =...
+          gcvBlurGauss(S(1:m0), x, bn, m0, m, true, idx, n, k_hdp);
       else
         [n1,n2] = size(Ub);
         coeffs_all = Ub + NoiseLevel(i) * randn(n1*n2,1);
         [X_gcv, X_opt, error_gcv, error_opt, k_gcv, k_opt] =...
           gcv(S(1:m_sv), V(:,1:m_sv), x, bn, m_sv, m, true, coeffs_all);
-        [X_hdp, error_hdp, k_hdp] =...
-          hdp(S(1:m_sv), V(:,1:m_sv), x, bn, m_sv-1, m, true, coeffs_all);
+        % Generic HDP across m0 candidates (non-blurGauss)
+        [X_hdp, error_hdp, k_hdp, m0_hdp_source] = hdpAcrossM0(S(1:m_sv), V(:,1:m_sv), x, bn, m_sv, m, coeffs_all);
       end
       testData = [testData; table(i, error_hdp, "hdp",...
                                   'VariableNames', {'SNR', 'Error', 'Method'})];
@@ -91,6 +91,7 @@ toc
       fprintf('  HDP error: %f on k = %d\n', error_hdp, k_hdp);
       fprintf('  GCV error: %f on k = %d\n', error_gcv, k_gcv);
       fprintf('  Optimal error: %f on k = %d\n\n', error_opt, k_opt);
+      fprintf('    (HDP selected from candidate m0 = %d)\n', m0_hdp_source);
       kData = [kData; table(i, k_hdp, "hdp",...
                             'VariableNames', {'SNR', 'k', 'Method'})];
       kData = [kData; table(i, k_gcv, "gcv",...
@@ -276,4 +277,33 @@ end
 function saveFigure(filename, figNumber)
   exportgraphics(figure(figNumber), filename);
   savefig(figure(figNumber), [filename(1:end-3), 'fig']);
+end
+
+% Helper: iterate HDP for blurGauss over multiple m0 candidates and pick max k
+function [k_best, m0_source] = hdpAcrossM0BlurGauss(S_all, bn, m0_full, idx, n)
+  % Candidate list
+  m0_list = unique([1, 10:10:m0_full, m0_full]);
+  k_best = -inf; m0_source = m0_full;
+  for m0_c = m0_list
+    [k_hdp] = hdpBlurGauss(S_all(1:m0_c), bn, m0_c, idx, n);
+    if (k_hdp > k_best)
+      k_best = k_hdp; m0_source = m0_c;
+    end
+  end
+end
+
+% Helper: iterate HDP for generic (non-blurGauss) case over multiple m0 candidates
+function [X_best, err_best, k_best, m0_source] = hdpAcrossM0(S_all, V, x, bn, m0_full, m, coeffs_all)
+  m0_list = unique([1, 10:10:m0_full-1, m0_full-1]);
+  k_best = -inf; err_best = inf; X_best = []; m0_source = m0_full-1;
+  for m0_c = m0_list
+    allSV = (m0_c == (m0_full-1)); % true only for largest candidate used in original call
+    [X_hdp, err_hdp, k_hdp] = hdp(S_all(1:m0_c), V(:,1:m0_c), x, bn, m0_c, m, allSV, coeffs_all);
+    if (k_hdp > k_best) || (k_hdp == k_best && err_hdp < err_best)
+      k_best = k_hdp; err_best = err_hdp; X_best = X_hdp; m0_source = m0_c;
+    end
+  end
+  if isempty(X_best)
+    error('hdpAcrossM0: All candidates failed.');
+  end
 end

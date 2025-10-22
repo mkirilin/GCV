@@ -1,5 +1,5 @@
-function [Xgcv, Xopt, err_gcv, err_opt, k_gcv, k_opt] =...
-  gcvBlurGauss(S, x, bn, m0, m, allSV, idx, n)
+function [Xgcv, Xopt, err_gcv, err_opt, err_hdp, k_gcv, k_opt] =...
+  gcvBlurGauss(S, x, bn, m0, m, allSV, idx, n, k_hdp)
 
   bn_image = reshape(bn, [n, n]);
   coeffs = dct2(bn_image);
@@ -41,7 +41,7 @@ function [Xgcv, Xopt, err_gcv, err_opt, k_gcv, k_opt] =...
 
   % Find k that minimizes the current sum
   [~, idx_min] = min(current_sums);
-  k_gcv = k_values(idx_min);
+  k_gcv = k_values(idx_min) + 1;
 
   % Compute cumulative coefficients
   coeffs = coeffs ./ S;
@@ -64,15 +64,18 @@ function [Xgcv, Xopt, err_gcv, err_opt, k_gcv, k_opt] =...
   errs = compute_chunked_errors(U, V, coeffs, x, n, chunk_size);
 
   % Find optimal k
-  [~, k_opt] = min(errs);
+  [err_opt, k_opt] = min(errs);
   
   % Compute solutions for k_gcv and k_opt
   Xgcv = compute_solution_vectorized(U, V, coeffs, k_gcv, n, chunk_size);
   Xopt = compute_solution_vectorized(U, V, coeffs, k_opt, n, chunk_size);
   
   % Compute errors
-  err_gcv = norm(Xgcv - x) / norm(x);
-  err_opt = norm(Xopt - x) / norm(x);
+  % err_gcv = norm(Xgcv - x) / norm(x);
+  % err_opt = norm(Xopt - x) / norm(x);
+  err_gcv = errs(k_gcv + 1);
+  err_hdp = errs(k_hdp + 1);
+  % err_opt = errs(k_opt + 1);
 
   % Deprecated. Uncomment if needed.
   % Print results
